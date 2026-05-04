@@ -26,12 +26,12 @@ router.post('/api/socios/:socio_id/actividades', requireRole(['admin', 'recepcio
 
 // GET página de socios
 router.get('/socios', requireRole(['admin', 'recepcion', 'tesoreria']), (req, res) => {
-  res.render('socios/socios', { usuario: req.session.usuario });
+  res.render('socios', { usuario: req.session.usuario });
 });
 
 // GET página de legajo (perfil de socio)
 router.get('/socios/:id/legajo', requireRole(['admin', 'recepcion', 'tesoreria']), (req, res) => {
-  res.render('socios/legajo', { usuario: req.session.usuario, socioId: req.params.id });
+  res.render('legajo', { usuario: req.session.usuario, socioId: req.params.id });
 });
 
 module.exports = router;

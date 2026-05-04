@@ -39,7 +39,7 @@ router.post('/api/admin/cambiar-contraseña/:id', (req, res, next) => {
 
 // GET página principal del módulo
 router.get('/admin', requireRole(['admin']), (req, res) => {
-  res.render('admin/usuarios', { usuario: req.session.usuario });
+  res.render('usuarios', { usuario: req.session.usuario });
 });
 
 module.exports = router;

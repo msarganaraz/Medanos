@@ -26,7 +26,7 @@ router.post('/api/actividades/:actividad_id/instructores', requireRole(['admin',
 
 // GET página de actividades
 router.get('/actividades', requireRole(['admin', 'recepcion', 'instructor']), (req, res) => {
-  res.render('actividades/actividades', { usuario: req.session.usuario });
+  res.render('actividades', { usuario: req.session.usuario });
 });
 
 module.exports = router;

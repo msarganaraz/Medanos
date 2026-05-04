@@ -38,12 +38,12 @@ router.post('/api/liquidaciones/:id/pagar', requireRole(['admin', 'tesoreria']),
 
 // GET página de instructores
 router.get('/instructores', requireRole(['admin', 'recepcion', 'tesoreria', 'instructor']), (req, res) => {
-  res.render('instructores/instructores', { usuario: req.session.usuario });
+  res.render('instructores', { usuario: req.session.usuario });
 });
 
 // GET página de liquidaciones
 router.get('/liquidaciones', requireRole(['admin', 'tesoreria']), (req, res) => {
-  res.render('instructores/liquidaciones', { usuario: req.session.usuario });
+  res.render('liquidaciones', { usuario: req.session.usuario });
 });
 
 module.exports = router;
