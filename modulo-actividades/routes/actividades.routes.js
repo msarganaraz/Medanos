@@ -6,7 +6,8 @@ const {
   obtenerActividad,
   crearActividad,
   editarActividad,
-  asignarInstructor
+  asignarInstructor,
+  desasignarInstructor
 } = require('../controllers/actividades.controller');
 
 // GET lista de actividades — admin, recepcion, instructor
@@ -23,6 +24,9 @@ router.put('/api/actividades/:id', requireRole(['admin', 'recepcion']), editarAc
 
 // POST asignar instructor a actividad — admin, recepcion
 router.post('/api/actividades/:actividad_id/instructores', requireRole(['admin', 'recepcion']), asignarInstructor);
+
+// DELETE desasignar instructor de actividad — admin, recepcion
+router.delete('/api/actividades/:actividad_id/instructores/:instructor_id', requireRole(['admin', 'recepcion']), desasignarInstructor);
 
 // GET página de actividades
 router.get('/actividades', requireRole(['admin', 'recepcion', 'instructor']), (req, res) => {

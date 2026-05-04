@@ -91,10 +91,24 @@ function asignarInstructor(req, res) {
   }
 }
 
+function desasignarInstructor(req, res) {
+  const { actividad_id, instructor_id } = req.params;
+
+  try {
+    db.prepare('DELETE FROM instructor_actividades WHERE actividad_id = ? AND instructor_id = ?')
+      .run(actividad_id, instructor_id);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 module.exports = {
   obtenerActividades,
   obtenerActividad,
   crearActividad,
   editarActividad,
-  asignarInstructor
+  asignarInstructor,
+  desasignarInstructor
 };

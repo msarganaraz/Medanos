@@ -71,6 +71,36 @@
         </div>
     </div>
 
+    <!-- Modal Instructores -->
+    <div class="modal" id="modalInstructores">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalInstructores')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header" id="instructoresTitle">Instructores</div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: 12px; color: var(--neutral-900);">Instructores asignados</h4>
+                    <div id="instructoresAsignados" style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="color: var(--neutral-400); font-size: var(--text-sm);">Cargando...</div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--neutral-200); padding-top: 24px;">
+                    <h4 style="font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: 12px; color: var(--neutral-900);">Asignar nuevo</h4>
+                    <div style="display: flex; gap: 12px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: 8px; color: var(--neutral-700);">Instructor</label>
+                            <select id="selectInstructor" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md); font-family: var(--font-sans);">
+                                <option value="">Seleccionar instructor...</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="white-space: nowrap;" onclick="asignarInstructorActividad()">Asignar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allActividades = [];
         let editandoId = null;
@@ -227,8 +257,91 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        function abrirModalInstructores(id) {
-            alert('Gestión de instructores disponible próximamente');
+        let actividadModalId = null;
+
+        async function abrirModalInstructores(id) {
+            actividadModalId = id;
+            const actividad = allActividades.find(a => a.id === id);
+            document.getElementById('instructoresTitle').textContent = `Instructores de ${actividad.nombre}`;
+
+            try {
+                // Cargar instructores asignados a esta actividad
+                const r1 = await fetch(`/api/actividades/${id}`, { credentials: 'include' });
+                const d1 = await r1.json();
+                const asignados = d1.instructores || [];
+
+                // Cargar todos los instructores activos
+                const r2 = await fetch('/api/instructores', { credentials: 'include' });
+                const d2 = await r2.json();
+                const todos = d2.instructores || [];
+
+                // Renderizar asignados
+                const asignadosHtml = asignados.length === 0
+                    ? '<div style="color: var(--neutral-400); font-size: var(--text-sm);">Sin instructores asignados</div>'
+                    : asignados.map(i => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                            <span style="font-size: var(--text-sm);">${i.apellido}, ${i.nombre}</span>
+                            <button type="button" class="btn btn-danger btn-sm" style="padding: 6px 12px; font-size: 12px;" onclick="desasignarInstructor(${i.id})">Quitar</button>
+                        </div>
+                    `).join('');
+
+                document.getElementById('instructoresAsignados').innerHTML = asignadosHtml;
+
+                // Renderizar dropdown de disponibles
+                const disponibles = todos.filter(t => !asignados.some(a => a.id === t.id));
+                const selectHtml = '<option value="">Seleccionar instructor...</option>' +
+                    disponibles.map(i => `<option value="${i.id}">${i.apellido}, ${i.nombre}</option>`).join('');
+
+                document.getElementById('selectInstructor').innerHTML = selectHtml;
+
+                // Abrir modal
+                document.getElementById('modalInstructores').classList.add('active');
+            } catch (err) {
+                alert('Error al cargar instructores: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        async function asignarInstructorActividad() {
+            const instructorId = document.getElementById('selectInstructor').value;
+            if (!instructorId) {
+                alert('Por favor selecciona un instructor');
+                return;
+            }
+
+            try {
+                const r = await fetch(`/api/actividades/${actividadModalId}/instructores`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ instructor_id: parseInt(instructorId) })
+                });
+                const d = await r.json();
+                if (!d.success) {
+                    alert('Error: ' + d.error);
+                    return;
+                }
+                abrirModalInstructores(actividadModalId);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function desasignarInstructor(instructorId) {
+            try {
+                const r = await fetch(`/api/actividades/${actividadModalId}/instructores/${instructorId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                const d = await r.json();
+                if (!d.success) {
+                    alert('Error: ' + d.error);
+                    return;
+                }
+                abrirModalInstructores(actividadModalId);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
 
         cargarActividades();
