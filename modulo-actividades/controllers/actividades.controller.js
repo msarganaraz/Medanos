@@ -1,24 +1,42 @@
 const db = require('../../database/db');
+const {
+  obtenerFranjasActividad,
+  obtenerDetallesFranja,
+  agregarSocioAFranja,
+  quitarSocioDeFranja,
+  agregarInstructorAFranja,
+  quitarInstructorDeFranja
+} = require('../services/franjas.service');
 
 function obtenerActividades(req, res) {
   try {
     const actividades = db.prepare(`
-      SELECT a.*,
-        GROUP_CONCAT(i.apellido || ', ' || i.nombre, '|') as instructores_str
-      FROM actividades a
-      LEFT JOIN instructor_actividades ia ON a.id = ia.actividad_id
-      LEFT JOIN instructores i ON ia.instructor_id = i.id AND i.activo = 1
-      WHERE a.activo = 1
-      GROUP BY a.id
-      ORDER BY a.nombre
+      SELECT id, nombre, descripcion, precio_base, tiene_horarios_flexibles, activo
+      FROM actividades
+      WHERE activo = 1
+      ORDER BY nombre
     `).all();
 
-    actividades.forEach(a => {
-      a.instructores = a.instructores_str ? a.instructores_str.split('|') : [];
-      delete a.instructores_str;
+    const resultado = actividades.map(act => {
+      if (act.tiene_horarios_flexibles) {
+        // Flexible activity: count socios directly
+        const socios_count = db.prepare(`
+          SELECT COUNT(*) as count FROM socios s
+          WHERE s.id IN (
+            SELECT DISTINCT sf.socio_id FROM socio_franjas sf
+            JOIN franjas_horarias f ON sf.franja_id = f.id
+            WHERE f.actividad_id = ?
+          )
+        `).get(act.id).count;
+        return { ...act, socios_count };
+      } else {
+        // Fixed schedule: get franjas with counts
+        const franjas = obtenerFranjasActividad(act.id);
+        return { ...act, franjas };
+      }
     });
 
-    res.json({ success: true, actividades });
+    res.json({ success: true, actividades: resultado });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -28,22 +46,48 @@ function obtenerActividad(req, res) {
   const { id } = req.params;
   try {
     const actividad = db.prepare('SELECT * FROM actividades WHERE id = ?').get(id);
-    if (!actividad) return res.status(404).json({ success: false, error: 'Actividad no encontrada' });
+    if (!actividad) {
+      return res.status(404).json({ success: false, error: 'Actividad no encontrada' });
+    }
 
-    const instructores = db.prepare(`
-      SELECT i.id, i.apellido, i.nombre FROM instructores i
-      JOIN instructor_actividades ia ON i.id = ia.instructor_id
-      WHERE ia.actividad_id = ?
-    `).all(id);
+    if (actividad.tiene_horarios_flexibles) {
+      // Flexible: return list of socios inscribed
+      const socios = db.prepare(`
+        SELECT s.id, s.apellido, s.nombre FROM socios s
+        WHERE s.id IN (
+          SELECT DISTINCT sf.socio_id FROM socio_franjas sf
+          JOIN franjas_horarias f ON sf.franja_id = f.id
+          WHERE f.actividad_id = ?
+        )
+        ORDER BY s.apellido, s.nombre
+      `).all(id);
 
-    res.json({ success: true, actividad, instructores });
+      res.json({ success: true, actividad, socios });
+    } else {
+      // Fixed: return franjas with socios/instructores
+      const franjas = obtenerFranjasActividad(id);
+      res.json({ success: true, actividad, franjas });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function obtenerDetallesFranjaHandler(req, res) {
+  const { franja_id } = req.params;
+  try {
+    const detalles = obtenerDetallesFranja(franja_id);
+    if (!detalles) {
+      return res.status(404).json({ success: false, error: 'Franja no encontrada' });
+    }
+    res.json({ success: true, ...detalles });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
 
 function crearActividad(req, res) {
-  const { nombre, descripcion, dias_horario, precio_base } = req.body;
+  const { nombre, descripcion, dias_horario, precio_base, tiene_horarios_flexibles } = req.body;
 
   if (!nombre) {
     return res.json({ success: false, error: 'Nombre es requerido' });
@@ -51,9 +95,9 @@ function crearActividad(req, res) {
 
   try {
     const result = db.prepare(`
-      INSERT INTO actividades (nombre, descripcion, dias_horario, precio_base, activo)
-      VALUES (?, ?, ?, ?, 1)
-    `).run(nombre, descripcion || null, dias_horario || null, precio_base || 0);
+      INSERT INTO actividades (nombre, descripcion, dias_horario, precio_base, tiene_horarios_flexibles, activo)
+      VALUES (?, ?, ?, ?, ?, 1)
+    `).run(nombre, descripcion || null, dias_horario || null, precio_base || 0, tiene_horarios_flexibles ? 1 : 0);
 
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (err) {
@@ -63,7 +107,7 @@ function crearActividad(req, res) {
 
 function editarActividad(req, res) {
   const { id } = req.params;
-  const { nombre, descripcion, dias_horario, precio_base, activo } = req.body;
+  const { nombre, descripcion, dias_horario, precio_base, activo, tiene_horarios_flexibles } = req.body;
 
   if (!nombre) {
     return res.json({ success: false, error: 'Nombre es requerido' });
@@ -71,9 +115,10 @@ function editarActividad(req, res) {
 
   try {
     db.prepare(`
-      UPDATE actividades SET nombre = ?, descripcion = ?, dias_horario = ?, precio_base = ?, activo = ?
+      UPDATE actividades
+      SET nombre = ?, descripcion = ?, dias_horario = ?, precio_base = ?, activo = ?, tiene_horarios_flexibles = ?
       WHERE id = ?
-    `).run(nombre, descripcion || null, dias_horario || null, precio_base || 0, activo ? 1 : 0, id);
+    `).run(nombre, descripcion || null, dias_horario || null, precio_base || 0, activo ? 1 : 0, tiene_horarios_flexibles ? 1 : 0, id);
 
     res.json({ success: true });
   } catch (err) {
@@ -81,8 +126,35 @@ function editarActividad(req, res) {
   }
 }
 
-function asignarInstructor(req, res) {
-  const { actividad_id } = req.params;
+function agregarSocioFranja(req, res) {
+  const { franja_id } = req.params;
+  const { socio_id } = req.body;
+
+  if (!socio_id) {
+    return res.json({ success: false, error: 'socio_id es requerido' });
+  }
+
+  try {
+    agregarSocioAFranja(franja_id, socio_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+}
+
+function quitarSocioFranja(req, res) {
+  const { franja_id, socio_id } = req.params;
+
+  try {
+    quitarSocioDeFranja(franja_id, socio_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function agregarInstructorFranja(req, res) {
+  const { franja_id } = req.params;
   const { instructor_id } = req.body;
 
   if (!instructor_id) {
@@ -90,30 +162,60 @@ function asignarInstructor(req, res) {
   }
 
   try {
-    const existe = db.prepare('SELECT id FROM instructor_actividades WHERE instructor_id = ? AND actividad_id = ?').get(instructor_id, actividad_id);
-    if (existe) {
-      return res.json({ success: false, error: 'El instructor ya está asignado a esta actividad' });
-    }
+    agregarInstructorAFranja(franja_id, instructor_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+}
 
-    db.prepare(`
-      INSERT INTO instructor_actividades (instructor_id, actividad_id)
-      VALUES (?, ?)
-    `).run(instructor_id, actividad_id);
+function quitarInstructorFranja(req, res) {
+  const { franja_id, instructor_id } = req.params;
 
+  try {
+    quitarInstructorDeFranja(franja_id, instructor_id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
 
-function desasignarInstructor(req, res) {
-  const { actividad_id, instructor_id } = req.params;
+function obtenerSociosDisponibles(req, res) {
+  const { franja_id } = req.params;
 
   try {
-    db.prepare('DELETE FROM instructor_actividades WHERE actividad_id = ? AND instructor_id = ?')
-      .run(actividad_id, instructor_id);
+    const franja = db.prepare('SELECT actividad_id FROM franjas_horarias WHERE id = ?').get(franja_id);
+    if (!franja) {
+      return res.status(404).json({ success: false, error: 'Franja no encontrada' });
+    }
 
-    res.json({ success: true });
+    const socios = db.prepare(`
+      SELECT s.id, s.apellido, s.nombre FROM socios s
+      WHERE s.id NOT IN (
+        SELECT sf.socio_id FROM socio_franjas sf WHERE sf.franja_id = ?
+      )
+      ORDER BY s.apellido, s.nombre
+    `).all(franja_id);
+
+    res.json({ success: true, socios });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function obtenerInstructoresDisponibles(req, res) {
+  const { franja_id } = req.params;
+
+  try {
+    const instructores = db.prepare(`
+      SELECT i.id, i.apellido, i.nombre FROM instructores i
+      WHERE i.activo = 1 AND i.id NOT IN (
+        SELECT inf.instructor_id FROM instructor_franjas inf WHERE inf.franja_id = ?
+      )
+      ORDER BY i.apellido, i.nombre
+    `).all(franja_id);
+
+    res.json({ success: true, instructores });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -124,6 +226,11 @@ module.exports = {
   obtenerActividad,
   crearActividad,
   editarActividad,
-  asignarInstructor,
-  desasignarInstructor
+  obtenerDetallesFranjaHandler,
+  agregarSocioFranja,
+  quitarSocioFranja,
+  agregarInstructorFranja,
+  quitarInstructorFranja,
+  obtenerSociosDisponibles,
+  obtenerInstructoresDisponibles
 };
