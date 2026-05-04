@@ -8,9 +8,17 @@ const { requireAuth } = require('./middleware/auth');
 let db;
 const servidor = express();
 
-// Configurar vistas
+// Configurar vistas en múltiples directorios
 servidor.set('view engine', 'ejs');
-servidor.set('views', path.join(__dirname, 'views'));
+servidor.set('views', [
+  path.join(__dirname, 'views'),
+  path.join(__dirname, 'modulo-admin/views'),
+  path.join(__dirname, 'modulo-socios/views'),
+  path.join(__dirname, 'modulo-actividades/views'),
+  path.join(__dirname, 'modulo-instructores/views'),
+  path.join(__dirname, 'modulo-cuotas/views'),
+  path.join(__dirname, 'modulo-caja/views')
+]);
 
 // Middleware
 servidor.use(express.json());
@@ -126,7 +134,7 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
   // servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
   // servidor.use(require('./modulo-caja/routes/caja.routes'));
 
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
   servidor.listen(PORT, () => {
     console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
     console.log('📁 Base de datos: database/medanos.db');
