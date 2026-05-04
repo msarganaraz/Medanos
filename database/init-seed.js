@@ -1,6 +1,21 @@
 const db = require('./db');
 const bcrypt = require('bcryptjs');
 
+function parseDiasHorario(diasHorarioStr) {
+  // Example: "Lun-Mié-Vie 18:00 a 19:00" → { dias: [0, 2, 4], hora_inicio: 18, hora_fin: 19 }
+  const diasMap = { 'Lun': 0, 'Mar': 1, 'Mié': 2, 'Jue': 3, 'Vie': 4, 'Sab': 5, 'Dom': 6 };
+
+  // Split by whitespace to separate dias from horarios
+  const parts = diasHorarioStr.split(' ');
+  const diasStr = parts[0]; // "Lun-Mié-Vie"
+  const horaInicio = parseInt(parts[1]); // "18:00" → 18
+  const horaFin = parseInt(parts[3]); // "19:00" → 19
+
+  const dias = diasStr.split('-').map(d => diasMap[d]);
+
+  return { dias, hora_inicio: horaInicio, hora_fin: horaFin };
+}
+
 async function initSeed() {
   try {
     // Verificar si la tabla usuarios tiene datos
@@ -58,6 +73,32 @@ async function initSeed() {
     actividades.forEach(a => { insertActividad.bind(a); insertActividad.step(); });
     insertActividad.free();
 
+    // Create franjas_horarias for each activity
+    const actividades_list = [
+      { id: 1, dias_horario: 'Lun-Mié-Vie 7:00 a 8:00' },
+      { id: 2, dias_horario: 'Mar-Jue 17:00 a 18:30' },
+      { id: 3, dias_horario: 'Mar-Jue 16:00 a 17:30' },
+      { id: 4, dias_horario: 'Lun-Mié-Vie 10:00 a 11:00' },
+      { id: 5, dias_horario: 'Mar-Jue 19:00 a 20:30' },
+      { id: 6, dias_horario: 'Lun-Mié 19:30 a 20:30, Dom 10:00 a 11:30' }
+    ];
+
+    const insertFranja = db.prepare(`
+      INSERT INTO franjas_horarias (actividad_id, dia_semana, hora_inicio, hora_fin)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    actividades_list.forEach(act => {
+      const parsed = parseDiasHorario(act.dias_horario.split(',')[0]);
+      parsed.dias.forEach(day => {
+        insertFranja.run(act.id, day, parsed.hora_inicio, parsed.hora_fin);
+      });
+    });
+    insertFranja.free();
+
+    // Mark Yoga as flexible (no fixed horarios)
+    db.prepare('UPDATE actividades SET tiene_horarios_flexibles = 1 WHERE nombre = ?').run('Yoga');
+
     // Instructores
     const instructores = [
       ['Sánchez', 'Pablo Javier', '28123456', '20281234567', '2235551111', 'pablo.sanchez@email.com', 'fijo', 35000.00, 0, 0],
@@ -74,7 +115,40 @@ async function initSeed() {
     instructores.forEach(i => { insertInstructor.bind(i); insertInstructor.step(); });
     insertInstructor.free();
 
-    console.log('✓ Base de datos inicializada correctamente');
+    // Add sample socio_franjas assignments (first 5 socios to first 6 franjas)
+    const insertSocioFranja = db.prepare(`
+      INSERT INTO socio_franjas (socio_id, franja_id, fecha_desde)
+      VALUES (?, ?, ?)
+    `);
+
+    const today = new Date().toISOString().split('T')[0];
+    // Assign socios 1-5 to franjas 1-6 in a round-robin pattern
+    for (let socio_id = 1; socio_id <= 5; socio_id++) {
+      for (let franja_id = 1; franja_id <= 6; franja_id++) {
+        if ((socio_id + franja_id) % 2 === 0) { // Assign every other combo
+          insertSocioFranja.run(socio_id, franja_id, today);
+        }
+      }
+    }
+    insertSocioFranja.free();
+
+    // Add sample instructor_franjas assignments
+    const insertInstructorFranja = db.prepare(`
+      INSERT INTO instructor_franjas (instructor_id, franja_id)
+      VALUES (?, ?)
+    `);
+
+    // Assign instructores 1-3 to franjas 1-6
+    for (let instr_id = 1; instr_id <= 3; instr_id++) {
+      for (let franja_id = 1; franja_id <= 6; franja_id++) {
+        if ((instr_id + franja_id) % 3 === 0) { // Assign every 3rd combo
+          insertInstructorFranja.run(instr_id, franja_id);
+        }
+      }
+    }
+    insertInstructorFranja.free();
+
+    console.log('✓ Base de datos inicializada con franjas horarias');
   } catch (err) {
     console.error('✗ Error al inicializar la base de datos:', err.message);
   }
