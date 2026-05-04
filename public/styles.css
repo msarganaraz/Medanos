@@ -407,6 +407,8 @@ p { margin-bottom: var(--space-md); }
   padding: var(--space-4xl);
   max-width: 500px;
   width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-modal);
   position: relative;
   animation: slideUp var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
