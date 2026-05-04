@@ -1,0 +1,24 @@
+{
+  "name": "medanos-verdes",
+  "version": "1.0.0",
+  "description": "Sistema de gestión del Club Médanos Verdes",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "test": "jest",
+    "dev": "node servidor.js"
+  },
+  "keywords": ["club", "gestion", "socios", "cuotas"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "sql.js": "^1.10.2",
+    "ejs": "^3.1.9",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
