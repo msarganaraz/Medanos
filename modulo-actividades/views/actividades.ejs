@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Actividades — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+
+        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-primary { background: #4aabd8; color: white; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
+
+        .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+        .activity-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s; border-top: 4px solid #4aabd8; }
+        .activity-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
+
+        .card-header { padding: 20px; border-bottom: 1px solid #e2e8f0; }
+        .card-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+        .card-desc { font-size: 13px; color: #64748b; }
+
+        .card-body { padding: 15px 20px; }
+        .card-detail { font-size: 13px; margin-bottom: 8px; }
+        .card-detail-label { color: #94a3b8; }
+        .card-detail-value { color: #1e293b; font-weight: 500; }
+
+        .card-actions { padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; }
+        .btn-action { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans'; transition: all 0.2s; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-edit:hover { background: #2563eb; }
+        .btn-config { background: #10b981; color: white; }
+        .btn-config:hover { background: #059669; }
+
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+        .modal-header { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .form-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans'; }
+        .form-actions .btn-submit { background: #2d6219; color: white; }
+        .form-actions .btn-cancel { background: #e2e8f0; color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏊 Actividades</h1>
+            <p>Natación, tenis, gimnasia y más disciplinas deportivas</p>
+        </div>
+
+        <div class="top-bar">
+            <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nueva actividad</button>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Buscar actividad..." onkeyup="filtrarActividades()">
+        </div>
+
+        <div class="activities-grid" id="activitiesGrid">
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">Cargando actividades...</div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar -->
+    <div class="modal" id="modalActividad">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalActividad')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header" id="modalTitle">Nueva actividad</div>
+                <form id="actividadForm" onsubmit="guardarActividad(event)">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="descripcion" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Días y horarios</label>
+                        <input type="text" id="dias_horario" placeholder="ej: Lu-Mi-Vi 18:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio base</label>
+                        <input type="number" id="precio_base" step="0.01" value="0">
+                    </div>
+                    <div class="form-group" id="activoGroup" style="display: none;">
+                        <label>
+                            <input type="checkbox" id="activo" checked> Activo
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Guardar</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalActividad')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allActividades = [];
+        let editandoId = null;
+
+        async function cargarActividades() {
+            try {
+                const r = await fetch('/api/actividades', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allActividades = d.actividades || [];
+                    renderActividades();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderActividades() {
+            const grid = document.getElementById('activitiesGrid');
+            if (allActividades.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">No hay actividades</div>';
+                return;
+            }
+            grid.innerHTML = allActividades.map(a => `
+                <div class="activity-card">
+                    <div class="card-header">
+                        <div class="card-title">${a.nombre}</div>
+                        <div class="card-desc">${a.descripcion || 'Sin descripción'}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-detail">
+                            <span class="card-detail-label">Horario:</span>
+                            <span class="card-detail-value">${a.dias_horario || 'Sin definir'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <span class="card-detail-label">Precio base:</span>
+                            <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${a.id})">Editar</button>
+                        <button class="btn-action btn-config" onclick="abrirModalInstructores(${a.id})">Instructores</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filtrarActividades() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allActividades.filter(a =>
+                a.nombre.toLowerCase().includes(search) ||
+                (a.descripcion && a.descripcion.toLowerCase().includes(search))
+            );
+            const grid = document.getElementById('activitiesGrid');
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">No hay actividades que coincidan</div>';
+                return;
+            }
+            grid.innerHTML = filtered.map(a => `
+                <div class="activity-card">
+                    <div class="card-header">
+                        <div class="card-title">${a.nombre}</div>
+                        <div class="card-desc">${a.descripcion || 'Sin descripción'}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-detail">
+                            <span class="card-detail-label">Horario:</span>
+                            <span class="card-detail-value">${a.dias_horario || 'Sin definir'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <span class="card-detail-label">Precio base:</span>
+                            <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${a.id})">Editar</button>
+                        <button class="btn-action btn-config" onclick="abrirModalInstructores(${a.id})">Instructores</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function abrirModalCrear() {
+            editandoId = null;
+            document.getElementById('modalTitle').textContent = 'Nueva actividad';
+            document.getElementById('actividadForm').reset();
+            document.getElementById('activoGroup').style.display = 'none';
+            document.getElementById('modalActividad').classList.add('active');
+        }
+
+        async function abrirModalEditar(id) {
+            try {
+                const r = await fetch(`/api/actividades/${id}`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    const a = d.actividad;
+                    editandoId = id;
+                    document.getElementById('modalTitle').textContent = 'Editar actividad';
+                    document.getElementById('nombre').value = a.nombre;
+                    document.getElementById('descripcion').value = a.descripcion || '';
+                    document.getElementById('dias_horario').value = a.dias_horario || '';
+                    document.getElementById('precio_base').value = a.precio_base || 0;
+                    document.getElementById('activo').checked = a.activo;
+                    document.getElementById('activoGroup').style.display = 'block';
+                    document.getElementById('modalActividad').classList.add('active');
+                }
+            } catch (err) {
+                alert('Error al cargar actividad');
+            }
+        }
+
+        async function guardarActividad(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const dias_horario = document.getElementById('dias_horario').value;
+            const precio_base = parseFloat(document.getElementById('precio_base').value);
+
+            try {
+                if (editandoId) {
+                    const activo = document.getElementById('activo').checked;
+                    const r = await fetch(`/api/actividades/${editandoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ nombre, descripcion, dias_horario, precio_base, activo })
+                    });
+                    const d = await r.json();
+                    if (!d.success) {
+                        alert('Error: ' + d.error);
+                        return;
+                    }
+                } else {
+                    const r = await fetch('/api/actividades', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ nombre, descripcion, dias_horario, precio_base })
+                    });
+                    const d = await r.json();
+                    if (!d.success) {
+                        alert('Error: ' + d.error);
+                        return;
+                    }
+                }
+                cerrarModal('modalActividad');
+                cargarActividades();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function abrirModalInstructores(id) {
+            alert('Gestión de instructores disponible próximamente');
+        }
+
+        cargarActividades();
+    </script>
+</body>
+</html>
