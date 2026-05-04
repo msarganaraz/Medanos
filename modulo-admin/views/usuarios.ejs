@@ -211,27 +211,29 @@
             const password = document.getElementById('password').value;
             const activo = document.getElementById('activo').checked;
 
-            if (!username || !nombre || !rol) {
-                alert('Por favor completa los campos requeridos');
+            if (!nombre || !rol) {
+                alert('Por favor completa los campos requeridos (nombre y rol)');
                 return;
             }
 
             try {
                 if (editandoId) {
+                    const payload = { nombre, rol, activo: activo ? 1 : 0 };
                     const r = await fetch(`/api/admin/usuarios/${editandoId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
-                        body: JSON.stringify({ nombre, rol, activo })
+                        body: JSON.stringify(payload)
                     });
                     const d = await r.json();
                     if (!d.success) {
-                        alert('Error: ' + d.error);
+                        alert('Error: ' + (d.error || 'Error desconocido'));
                         return;
                     }
+                    alert('Usuario actualizado correctamente');
                 } else {
-                    if (!password) {
-                        alert('Contraseña requerida para nuevo usuario');
+                    if (!username || !password) {
+                        alert('Usuario y contraseña requeridos para nuevo usuario');
                         return;
                     }
                     const r = await fetch('/api/admin/usuarios', {
@@ -242,14 +244,16 @@
                     });
                     const d = await r.json();
                     if (!d.success) {
-                        alert('Error: ' + d.error);
+                        alert('Error: ' + (d.error || 'Error desconocido'));
                         return;
                     }
+                    alert('Usuario creado correctamente');
                 }
                 cerrarModal('modalUsuario');
                 cargarUsuarios();
             } catch (err) {
-                alert('Error: ' + err.message);
+                alert('Error al guardar: ' + err.message);
+                console.error(err);
             }
         }
 
