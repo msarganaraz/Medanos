@@ -1,36 +1,58 @@
 const express = require('express');
-const router = express.Router();
-const { requireRole } = require('../../middleware/auth');
 const {
   obtenerActividades,
   obtenerActividad,
   crearActividad,
   editarActividad,
-  asignarInstructor,
-  desasignarInstructor
+  obtenerDetallesFranjaHandler,
+  agregarSocioFranja,
+  quitarSocioFranja,
+  agregarInstructorFranja,
+  quitarInstructorFranja,
+  obtenerSociosDisponibles,
+  obtenerInstructoresDisponibles
 } = require('../controllers/actividades.controller');
+const { requireRole } = require('../../middleware/auth');
 
-// GET lista de actividades — admin, recepcion, instructor
-router.get('/api/actividades', requireRole(['admin', 'recepcion', 'instructor']), obtenerActividades);
+const router = express.Router();
 
-// GET actividad por ID — admin, recepcion, instructor
-router.get('/api/actividades/:id', requireRole(['admin', 'recepcion', 'instructor']), obtenerActividad);
+// Get all activities with franja info
+router.get('/api/actividades', (req, res) => obtenerActividades(req, res));
 
-// POST crear actividad — admin, recepcion
-router.post('/api/actividades', requireRole(['admin', 'recepcion']), crearActividad);
+// Get single activity
+router.get('/api/actividades/:id', (req, res) => obtenerActividad(req, res));
 
-// PUT editar actividad — admin, recepcion
-router.put('/api/actividades/:id', requireRole(['admin', 'recepcion']), editarActividad);
+// Create activity
+router.post('/api/actividades', requireRole(['admin']), (req, res) => crearActividad(req, res));
 
-// POST asignar instructor a actividad — admin, recepcion
-router.post('/api/actividades/:actividad_id/instructores', requireRole(['admin', 'recepcion']), asignarInstructor);
+// Edit activity
+router.put('/api/actividades/:id', requireRole(['admin']), (req, res) => editarActividad(req, res));
 
-// DELETE desasignar instructor de actividad — admin, recepcion
-router.delete('/api/actividades/:actividad_id/instructores/:instructor_id', requireRole(['admin', 'recepcion']), desasignarInstructor);
+// Get franja details (socios + instructores)
+router.get('/api/franjas/:franja_id', (req, res) => obtenerDetallesFranjaHandler(req, res));
 
-// GET página de actividades
-router.get('/actividades', requireRole(['admin', 'recepcion', 'instructor']), (req, res) => {
-  res.render('actividades', { usuario: req.session.usuario });
+// Add socio to franja
+router.post('/api/franjas/:franja_id/socios', requireRole(['admin', 'recepcion']), (req, res) => agregarSocioFranja(req, res));
+
+// Remove socio from franja
+router.delete('/api/franjas/:franja_id/socios/:socio_id', requireRole(['admin', 'recepcion']), (req, res) => quitarSocioFranja(req, res));
+
+// Add instructor to franja
+router.post('/api/franjas/:franja_id/instructores', requireRole(['admin']), (req, res) => agregarInstructorFranja(req, res));
+
+// Remove instructor from franja
+router.delete('/api/franjas/:franja_id/instructores/:instructor_id', requireRole(['admin']), (req, res) => quitarInstructorFranja(req, res));
+
+// Get available socios for a franja
+router.get('/api/franjas/:franja_id/socios/disponibles', (req, res) => obtenerSociosDisponibles(req, res));
+
+// Get available instructores for a franja
+router.get('/api/franjas/:franja_id/instructores/disponibles', (req, res) => obtenerInstructoresDisponibles(req, res));
+
+// View (EJS page)
+router.get('/actividades', (req, res) => {
+  if (!req.session.usuario) return res.redirect('/login');
+  res.render('actividades');
 });
 
 module.exports = router;
