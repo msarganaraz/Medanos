@@ -49,12 +49,12 @@ async function initSeed() {
       ['S010', 'Moreno', 'Lucía Patricia', '33001122', '1986-06-07', '2235559999', 'lmoreno@email.com', 'Av. Cuarta #147, CABA', '2024-01-25', 'ACTIVO']
     ];
 
-    const insertSocio = db.prepare(`
-      INSERT INTO socios (numero_socio, apellido, nombre, dni, fecha_nacimiento, telefono, email, domicilio, fecha_alta, estado)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    socios.forEach(s => { insertSocio.bind(s); insertSocio.step(); });
-    insertSocio.free();
+    socios.forEach(s => {
+      db.prepare(`
+        INSERT INTO socios (numero_socio, apellido, nombre, dni, fecha_nacimiento, telefono, email, domicilio, fecha_alta, estado)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(...s);
+    });
 
     // Actividades
     const actividades = [
@@ -66,12 +66,12 @@ async function initSeed() {
       ['Yoga', 'Yoga hatha y vinyasa', 'Lun-Mié 19:30 a 20:30, Dom 10:00 a 11:30', 1000.00, 1]
     ];
 
-    const insertActividad = db.prepare(`
-      INSERT INTO actividades (nombre, descripcion, dias_horario, precio_base, activo)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    actividades.forEach(a => { insertActividad.bind(a); insertActividad.step(); });
-    insertActividad.free();
+    actividades.forEach(a => {
+      db.prepare(`
+        INSERT INTO actividades (nombre, descripcion, dias_horario, precio_base, activo)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(...a);
+    });
 
     // Create franjas_horarias for each activity
     const actividades_list = [
@@ -94,7 +94,6 @@ async function initSeed() {
         insertFranja.run(act.id, day, parsed.hora_inicio, parsed.hora_fin);
       });
     });
-    insertFranja.free();
 
     // Mark Yoga as flexible (no fixed horarios)
     db.prepare('UPDATE actividades SET tiene_horarios_flexibles = 1 WHERE nombre = ?').run('Yoga');
@@ -108,45 +107,39 @@ async function initSeed() {
       ['Ruiz', 'Fernando Miguel', '32567890', '20325678900', '2235555555', 'fernando.ruiz@email.com', 'fijo', 40000.00, 0, 0]
     ];
 
-    const insertInstructor = db.prepare(`
-      INSERT INTO instructores (apellido, nombre, dni, cuil, telefono, email, tipo_contrato, monto_fijo, valor_hora, valor_por_alumno)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    instructores.forEach(i => { insertInstructor.bind(i); insertInstructor.step(); });
-    insertInstructor.free();
+    instructores.forEach(i => {
+      db.prepare(`
+        INSERT INTO instructores (apellido, nombre, dni, cuil, telefono, email, tipo_contrato, monto_fijo, valor_hora, valor_por_alumno)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(...i);
+    });
 
     // Add sample socio_franjas assignments (first 5 socios to first 6 franjas)
-    const insertSocioFranja = db.prepare(`
-      INSERT INTO socio_franjas (socio_id, franja_id, fecha_desde)
-      VALUES (?, ?, ?)
-    `);
-
     const today = new Date().toISOString().split('T')[0];
     // Assign socios 1-5 to franjas 1-6 in a round-robin pattern
     for (let socio_id = 1; socio_id <= 5; socio_id++) {
       for (let franja_id = 1; franja_id <= 6; franja_id++) {
         if ((socio_id + franja_id) % 2 === 0) { // Assign every other combo
-          insertSocioFranja.run(socio_id, franja_id, today);
+          db.prepare(`
+            INSERT INTO socio_franjas (socio_id, franja_id, fecha_desde)
+            VALUES (?, ?, ?)
+          `).run(socio_id, franja_id, today);
         }
       }
     }
-    insertSocioFranja.free();
 
     // Add sample instructor_franjas assignments
-    const insertInstructorFranja = db.prepare(`
-      INSERT INTO instructor_franjas (instructor_id, franja_id)
-      VALUES (?, ?)
-    `);
-
     // Assign instructores 1-3 to franjas 1-6
     for (let instr_id = 1; instr_id <= 3; instr_id++) {
       for (let franja_id = 1; franja_id <= 6; franja_id++) {
         if ((instr_id + franja_id) % 3 === 0) { // Assign every 3rd combo
-          insertInstructorFranja.run(instr_id, franja_id);
+          db.prepare(`
+            INSERT INTO instructor_franjas (instructor_id, franja_id)
+            VALUES (?, ?)
+          `).run(instr_id, franja_id);
         }
       }
     }
-    insertInstructorFranja.free();
 
     console.log('✓ Base de datos inicializada con franjas horarias');
   } catch (err) {
