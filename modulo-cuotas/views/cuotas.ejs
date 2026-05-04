@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cuotas y Pagos — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-primary { background: #059669; color: white; }
+        .btn-primary:hover { background: #047857; transform: translateY(-2px); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .tab { padding: 10px 20px; background: none; border: none; cursor: pointer; font-weight: 500; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.2s; font-family: 'DM Sans'; }
+        .tab.active { color: #059669; border-bottom-color: #059669; }
+        .content-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-pendiente { background: #fecaca; color: #7f1d1d; }
+        .badge-pagada { background: #d1fae5; color: #065f46; }
+        .badge-vencida { background: #fef3c7; color: #92400e; }
+        .btn-action { padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; margin-right: 5px; background: #3b82f6; color: white; font-family: 'DM Sans'; }
+        .btn-action:hover { background: #2563eb; }
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+        .modal-header { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .form-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans'; }
+        .form-actions .btn-submit { background: #2d6219; color: white; }
+        .form-actions .btn-cancel { background: #e2e8f0; color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Cuotas y Pagos</h1>
+            <p>Planes de cuota, generación mensual y registro de pagos</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="mostrarTab('planes')">Planes</button>
+            <button class="tab" onclick="mostrarTab('cuotas')">Cuotas</button>
+        </div>
+
+        <!-- TAB PLANES -->
+        <div id="planes" class="tab-content active">
+            <div class="top-bar">
+                <button class="btn btn-primary" onclick="abrirModalPlan()">+ Nuevo plan</button>
+            </div>
+            <div class="content-card">
+                <table id="planesTable">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="planesBody">
+                        <tr><td colspan="5" class="empty-state">Cargando planes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB CUOTAS -->
+        <div id="cuotas" class="tab-content">
+            <div class="top-bar">
+                <button class="btn btn-primary" onclick="generarCuotasDelMes()">🔄 Generar cuotas del mes</button>
+            </div>
+            <div class="content-card">
+                <div style="margin-bottom: 20px;">
+                    <select id="filterEstado" onchange="filtrarCuotas()" style="padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'DM Sans';">
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="PAGADA">Pagada</option>
+                        <option value="VENCIDA">Vencida</option>
+                    </select>
+                </div>
+                <table id="cuotasTable">
+                    <thead>
+                        <tr>
+                            <th>Período</th>
+                            <th>Socio</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Vencimiento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuotasBody">
+                        <tr><td colspan="6" class="empty-state">Cargando cuotas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Plan -->
+    <div class="modal" id="modalPlan">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalPlan')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Nuevo plan de cuota</div>
+                <form onsubmit="guardarPlan(event)">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="planNombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="planDescripcion" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto *</label>
+                        <input type="number" id="planMonto" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="planTipo">
+                            <option value="">Ninguno</option>
+                            <option value="individual">Individual</option>
+                            <option value="familiar">Familiar</option>
+                            <option value="actividad">Por actividad</option>
+                            <option value="combo">Combo</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Guardar</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalPlan')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pago -->
+    <div class="modal" id="modalPago">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalPago')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Registrar pago</div>
+                <form onsubmit="guardarPago(event)">
+                    <input type="hidden" id="pagoId">
+                    <div class="form-group">
+                        <label>Importe *</label>
+                        <input type="number" id="pagoImporte" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Medio de pago</label>
+                        <select id="pagoMedio">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="debito">Débito</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Registrar pago</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalPago')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allPlanes = [];
+        let allCuotas = [];
+
+        function mostrarTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            if (tab === 'planes') cargarPlanes();
+            else cargarCuotas();
+        }
+
+        async function cargarPlanes() {
+            try {
+                const r = await fetch('/api/planes', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allPlanes = d.planes || [];
+                    renderPlanes();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function cargarCuotas() {
+            try {
+                const r = await fetch('/api/cuotas', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allCuotas = d.cuotas || [];
+                    renderCuotas();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderPlanes() {
+            const body = document.getElementById('planesBody');
+            if (allPlanes.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">No hay planes</td></tr>';
+                return;
+            }
+            body.innerHTML = allPlanes.map(p => `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.descripcion || '—'}</td>
+                    <td>$${p.monto.toFixed(2)}</td>
+                    <td>${p.tipo || '—'}</td>
+                    <td><button class="btn-action" onclick="alert('Editar plan - Próximamente')">Editar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCuotas() {
+            const body = document.getElementById('cuotasBody');
+            if (allCuotas.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="empty-state">No hay cuotas</td></tr>';
+                return;
+            }
+            body.innerHTML = allCuotas.map(c => `
+                <tr>
+                    <td>${c.periodo}</td>
+                    <td>${c.apellido}, ${c.nombre}</td>
+                    <td>$${c.monto_total.toFixed(2)}</td>
+                    <td><span class="badge badge-${c.estado.toLowerCase()}">${c.estado}</span></td>
+                    <td>${c.fecha_vencimiento || '—'}</td>
+                    <td>
+                        ${c.estado === 'PENDIENTE' ? `<button class="btn-action" onclick="abrirModalPago(${c.id})">Pagar</button>` : '—'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarCuotas() {
+            const estado = document.getElementById('filterEstado').value;
+            const filtered = !estado ? allCuotas : allCuotas.filter(c => c.estado === estado);
+            const body = document.getElementById('cuotasBody');
+            if (filtered.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="empty-state">No hay cuotas</td></tr>';
+                return;
+            }
+            body.innerHTML = filtered.map(c => `
+                <tr>
+                    <td>${c.periodo}</td>
+                    <td>${c.apellido}, ${c.nombre}</td>
+                    <td>$${c.monto_total.toFixed(2)}</td>
+                    <td><span class="badge badge-${c.estado.toLowerCase()}">${c.estado}</span></td>
+                    <td>${c.fecha_vencimiento || '—'}</td>
+                    <td>
+                        ${c.estado === 'PENDIENTE' ? `<button class="btn-action" onclick="abrirModalPago(${c.id})">Pagar</button>` : '—'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirModalPlan() {
+            document.getElementById('planNombre').value = '';
+            document.getElementById('planDescripcion').value = '';
+            document.getElementById('planMonto').value = '';
+            document.getElementById('planTipo').value = '';
+            document.getElementById('modalPlan').classList.add('active');
+        }
+
+        function abrirModalPago(cuotaId) {
+            document.getElementById('pagoId').value = cuotaId;
+            document.getElementById('pagoImporte').value = '';
+            document.getElementById('pagoMedio').value = 'efectivo';
+            document.getElementById('modalPago').classList.add('active');
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function guardarPlan(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('planNombre').value;
+            const descripcion = document.getElementById('planDescripcion').value;
+            const monto = parseFloat(document.getElementById('planMonto').value);
+            const tipo = document.getElementById('planTipo').value;
+
+            try {
+                const r = await fetch('/api/planes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nombre, descripcion, monto, tipo: tipo || null })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalPlan');
+                    cargarPlanes();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        async function guardarPago(e) {
+            e.preventDefault();
+            const cuota_id = parseInt(document.getElementById('pagoId').value);
+            const importe = parseFloat(document.getElementById('pagoImporte').value);
+            const medio_pago = document.getElementById('pagoMedio').value;
+
+            try {
+                const r = await fetch('/api/pagos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ cuota_id, importe, medio_pago })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalPago');
+                    cargarCuotas();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        async function generarCuotasDelMes() {
+            if (!confirm('¿Generar cuotas del mes actual para todos los socios activos?')) return;
+            try {
+                const r = await fetch('/api/cuotas/generar', { method: 'POST', credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    alert(d.message);
+                    cargarCuotas();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        cargarPlanes();
+    </script>
+</body>
+</html>

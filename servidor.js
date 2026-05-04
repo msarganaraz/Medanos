@@ -131,8 +131,8 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
   servidor.use(require('./modulo-socios/routes/socios.routes'));
   servidor.use(require('./modulo-actividades/routes/actividades.routes'));
   servidor.use(require('./modulo-instructores/routes/instructores.routes'));
-  // servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
-  // servidor.use(require('./modulo-caja/routes/caja.routes'));
+  servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
+  servidor.use(require('./modulo-caja/routes/caja.routes'));
 
   const PORT = process.env.PORT || 3000;
   servidor.listen(PORT, () => {

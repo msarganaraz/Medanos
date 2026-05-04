@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Caja — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #2d6219; }
+        .stat-label { font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 8px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #2d6219; }
+        .stat-card.egreso { border-left-color: #dc2626; }
+        .stat-card.egreso .stat-value { color: #dc2626; }
+        .stat-card.saldo { border-left-color: #059669; }
+        .stat-card.saldo .stat-value { color: #059669; }
+        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-primary { background: #d97706; color: white; }
+        .btn-primary:hover { background: #b45309; transform: translateY(-2px); }
+        .content-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #1e293b; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-ingreso { background: #d1fae5; color: #065f46; }
+        .badge-egreso { background: #fee2e2; color: #7f1d1d; }
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+        .modal-header { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .form-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans'; }
+        .form-actions .btn-submit { background: #2d6219; color: white; }
+        .form-actions .btn-cancel { background: #e2e8f0; color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Caja / Tesorería</h1>
+            <p>Movimientos de ingresos, egresos y reportes financieros</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Ingresos del mes</div>
+                <div class="stat-value" id="statIngresos">$0</div>
+            </div>
+            <div class="stat-card egreso">
+                <div class="stat-label">Egresos del mes</div>
+                <div class="stat-value" id="statEgresos">$0</div>
+            </div>
+            <div class="stat-card saldo">
+                <div class="stat-label">Saldo disponible</div>
+                <div class="stat-value" id="statSaldo">$0</div>
+            </div>
+        </div>
+
+        <div class="top-bar">
+            <button class="btn btn-primary" onclick="abrirModalMovimiento()">+ Registrar movimiento</button>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">Movimientos recientes</div>
+            <table id="movimientosTable">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Concepto</th>
+                        <th>Importe</th>
+                        <th>Usuario</th>
+                    </tr>
+                </thead>
+                <tbody id="movimientosBody">
+                    <tr><td colspan="5" class="empty-state">Cargando movimientos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modalMovimiento">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalMovimiento')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Registrar movimiento</div>
+                <form onsubmit="guardarMovimiento(event)">
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        <select id="nuevoTipo" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="ingreso">Ingreso</option>
+                            <option value="egreso">Egreso</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Concepto *</label>
+                        <input type="text" id="nuevoConcepto" placeholder="ej: Pago de cuota, Liquidación..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Importe *</label>
+                        <input type="number" id="nuevoImporte" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Guardar</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalMovimiento')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allMovimientos = [];
+
+        async function cargarMovimientos() {
+            try {
+                const r = await fetch('/api/caja/movimientos', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allMovimientos = d.movimientos || [];
+                    renderMovimientos();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function cargarReporte() {
+            try {
+                const r = await fetch('/api/caja/reporte', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    document.getElementById('statIngresos').textContent = '$' + d.ingresos.toFixed(2);
+                    document.getElementById('statEgresos').textContent = '$' + d.egresos.toFixed(2);
+                    document.getElementById('statSaldo').textContent = '$' + d.saldo.toFixed(2);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderMovimientos() {
+            const body = document.getElementById('movimientosBody');
+            if (allMovimientos.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">No hay movimientos</td></tr>';
+                return;
+            }
+            body.innerHTML = allMovimientos.map(m => `
+                <tr>
+                    <td>${m.fecha}</td>
+                    <td><span class="badge badge-${m.tipo}">${m.tipo.toUpperCase()}</span></td>
+                    <td>${m.concepto}</td>
+                    <td>$${m.importe.toFixed(2)}</td>
+                    <td>${m.usuario_nombre || '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirModalMovimiento() {
+            document.getElementById('nuevoTipo').value = '';
+            document.getElementById('nuevoConcepto').value = '';
+            document.getElementById('nuevoImporte').value = '';
+            document.getElementById('modalMovimiento').classList.add('active');
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function guardarMovimiento(e) {
+            e.preventDefault();
+            const tipo = document.getElementById('nuevoTipo').value;
+            const concepto = document.getElementById('nuevoConcepto').value;
+            const importe = parseFloat(document.getElementById('nuevoImporte').value);
+
+            try {
+                const r = await fetch('/api/caja/movimiento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ tipo, concepto, importe })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalMovimiento');
+                    cargarMovimientos();
+                    cargarReporte();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        cargarMovimientos();
+        cargarReporte();
+        setInterval(() => { cargarMovimientos(); cargarReporte(); }, 30000);
+    </script>
+</body>
+</html>
