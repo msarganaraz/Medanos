@@ -30,6 +30,10 @@ async function initDB() {
 
   db.run('PRAGMA foreign_keys = ON');
   console.log('✓ Base de datos conectada');
+
+  // Seed database if empty
+  const initSeed = require('./init-seed');
+  await initSeed();
 }
 
 function saveDB() {
