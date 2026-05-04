@@ -31,7 +31,34 @@ CREATE TABLE actividades (
   descripcion TEXT,
   dias_horario TEXT,
   precio_base REAL DEFAULT 0,
+  tiene_horarios_flexibles INTEGER DEFAULT 0,
   activo INTEGER DEFAULT 1
+);
+
+-- FRANJAS HORARIAS (hourly slots for activities)
+CREATE TABLE franjas_horarias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  actividad_id INTEGER REFERENCES actividades(id),
+  dia_semana INTEGER NOT NULL,
+  hora_inicio INTEGER NOT NULL,
+  hora_fin INTEGER NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- SOCIOS ↔ FRANJAS (replacing socio_actividades)
+CREATE TABLE socio_franjas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  socio_id INTEGER REFERENCES socios(id),
+  franja_id INTEGER REFERENCES franjas_horarias(id),
+  fecha_desde TEXT NOT NULL,
+  fecha_hasta TEXT
+);
+
+-- INSTRUCTORES ↔ FRANJAS (replacing instructor_actividades)
+CREATE TABLE instructor_franjas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  instructor_id INTEGER REFERENCES instructores(id),
+  franja_id INTEGER REFERENCES franjas_horarias(id)
 );
 
 -- SOCIOS ↔ ACTIVIDADES
