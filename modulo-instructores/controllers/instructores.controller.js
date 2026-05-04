@@ -15,7 +15,13 @@ function obtenerInstructor(req, res) {
   try {
     const instructor = db.prepare('SELECT * FROM instructores WHERE id = ?').get(id);
     if (!instructor) return res.status(404).json({ success: false, error: 'Instructor no encontrado' });
-    const actividades = db.prepare('SELECT a.id, a.nombre FROM actividades a JOIN instructor_actividades ia ON a.id = ia.actividad_id WHERE ia.instructor_id = ?').all(id);
+    const actividades = db.prepare(`
+      SELECT a.id, a.nombre, a.dias_horario
+      FROM actividades a
+      JOIN instructor_actividades ia ON a.id = ia.actividad_id
+      WHERE ia.instructor_id = ? AND a.activo = 1
+      ORDER BY a.nombre
+    `).all(id);
     res.json({ success: true, instructor, actividades });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

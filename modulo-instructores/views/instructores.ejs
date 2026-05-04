@@ -98,6 +98,45 @@
         </div>
     </div>
 
+    <!-- Modal Detalle -->
+    <div class="modal" id="modalDetalle">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalDetalle')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header" id="detalleTitle">Instructor</div>
+                <div style="line-height: 1.8; margin-bottom: 24px;">
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: var(--neutral-500); font-size: var(--text-sm);">Tipo de contrato</span>
+                        <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);" id="detalleTipo">—</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: var(--neutral-500); font-size: var(--text-sm);">Monto/Valor</span>
+                        <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);" id="detalleValor">—</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: var(--neutral-500); font-size: var(--text-sm);">Teléfono</span>
+                        <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);" id="detalleTelefono">—</div>
+                    </div>
+                    <div>
+                        <span style="color: var(--neutral-500); font-size: var(--text-sm);">Email</span>
+                        <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);" id="detalleEmail">—</div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--neutral-200); padding-top: 24px; margin-bottom: 24px;">
+                    <h4 style="font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: 12px; color: var(--neutral-900);">Actividades asignadas</h4>
+                    <div id="detalleActividades" style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="color: var(--neutral-400); font-size: var(--text-sm);">Cargando...</div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--neutral-200); padding-top: 24px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allInstructores = [];
         let editandoId = null;
@@ -140,8 +179,9 @@
                         <td><span class="badge badge-${i.tipo_contrato}">${i.tipo_contrato.toUpperCase()}</span></td>
                         <td>${monto}</td>
                         <td>${i.telefono || '—'}</td>
-                        <td>
-                            <button class="btn-action" onclick="abrirModalEditar(${i.id})">Editar</button>
+                        <td style="display: flex; gap: 6px;">
+                            <button class="btn-action" onclick="abrirModalDetalle(${i.id})">Ver</button>
+                            <button class="btn-action btn-edit" onclick="abrirModalEditar(${i.id})">Editar</button>
                         </td>
                     </tr>
                 `;
@@ -171,8 +211,9 @@
                         <td><span class="badge badge-${i.tipo_contrato}">${i.tipo_contrato.toUpperCase()}</span></td>
                         <td>${monto}</td>
                         <td>${i.telefono || '—'}</td>
-                        <td>
-                            <button class="btn-action" onclick="abrirModalEditar(${i.id})">Editar</button>
+                        <td style="display: flex; gap: 6px;">
+                            <button class="btn-action" onclick="abrirModalDetalle(${i.id})">Ver</button>
+                            <button class="btn-action btn-edit" onclick="abrirModalEditar(${i.id})">Editar</button>
                         </td>
                     </tr>
                 `;
@@ -244,6 +285,50 @@
                 }
                 cerrarModal('modalInstructor');
                 cargarInstructores();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function abrirModalDetalle(id) {
+            try {
+                const r = await fetch(`/api/instructores/${id}`, { credentials: 'include' });
+                const d = await r.json();
+                if (!d.success) {
+                    alert('Error: ' + d.error);
+                    return;
+                }
+
+                const i = d.instructor;
+                const actividades = d.actividades || [];
+
+                document.getElementById('detalleTitle').textContent = `${i.apellido}, ${i.nombre}`;
+
+                const tipoLabels = { fijo: 'Fijo mensual', por_hora: 'Por hora', por_alumno: 'Por alumno', combinado: 'Combinado' };
+                document.getElementById('detalleTipo').textContent = tipoLabels[i.tipo_contrato] || i.tipo_contrato;
+
+                let valor = '—';
+                if (i.tipo_contrato === 'fijo') valor = `$${i.monto_fijo.toFixed(2)}/mes`;
+                else if (i.tipo_contrato === 'por_hora') valor = `$${i.valor_hora.toFixed(2)}/hora`;
+                else if (i.tipo_contrato === 'por_alumno') valor = `$${i.valor_por_alumno.toFixed(2)}/alumno`;
+                else if (i.tipo_contrato === 'combinado')
+                    valor = `Fijo: $${i.monto_fijo.toFixed(2)} + Hora: $${i.valor_hora.toFixed(2)} + Alumno: $${i.valor_por_alumno.toFixed(2)}`;
+                document.getElementById('detalleValor').textContent = valor;
+
+                document.getElementById('detalleTelefono').textContent = i.telefono || '—';
+                document.getElementById('detalleEmail').textContent = i.email || '—';
+
+                const actividadesHtml = actividades.length === 0
+                    ? '<div style="color: var(--neutral-400); font-size: var(--text-sm);">Sin actividades asignadas</div>'
+                    : actividades.map(a => `
+                        <div style="padding: 8px; background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                            <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);">${a.nombre}</div>
+                            <div style="font-size: var(--text-sm); color: var(--neutral-500);">${a.dias_horario || 'Horario no definido'}</div>
+                        </div>
+                    `).join('');
+
+                document.getElementById('detalleActividades').innerHTML = actividadesHtml;
+                document.getElementById('modalDetalle').classList.add('active');
             } catch (err) {
                 alert('Error: ' + err.message);
             }

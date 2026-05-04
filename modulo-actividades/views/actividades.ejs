@@ -143,6 +143,14 @@
                             <span class="card-detail-label">Precio base:</span>
                             <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
                         </div>
+                        <div class="card-detail">
+                            <span class="card-detail-label">Instructores:</span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                                ${a.instructores && a.instructores.length > 0
+                                  ? a.instructores.map(n => `<span class="badge badge-activo">${n}</span>`).join('')
+                                  : '<span style="color: var(--neutral-400); font-size: 12px;">Sin asignar</span>'}
+                            </div>
+                        </div>
                     </div>
                     <div class="card-actions">
                         <button class="btn-action btn-edit" onclick="abrirModalEditar(${a.id})">Editar</button>
@@ -177,6 +185,14 @@
                         <div class="card-detail">
                             <span class="card-detail-label">Precio base:</span>
                             <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
+                        </div>
+                        <div class="card-detail">
+                            <span class="card-detail-label">Instructores:</span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                                ${a.instructores && a.instructores.length > 0
+                                  ? a.instructores.map(n => `<span class="badge badge-activo">${n}</span>`).join('')
+                                  : '<span style="color: var(--neutral-400); font-size: 12px;">Sin asignar</span>'}
+                            </div>
                         </div>
                     </div>
                     <div class="card-actions">

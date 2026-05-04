@@ -2,7 +2,22 @@ const db = require('../../database/db');
 
 function obtenerActividades(req, res) {
   try {
-    const actividades = db.prepare('SELECT * FROM actividades WHERE activo = 1 ORDER BY nombre').all();
+    const actividades = db.prepare(`
+      SELECT a.*,
+        GROUP_CONCAT(i.apellido || ', ' || i.nombre, '|') as instructores_str
+      FROM actividades a
+      LEFT JOIN instructor_actividades ia ON a.id = ia.actividad_id
+      LEFT JOIN instructores i ON ia.instructor_id = i.id AND i.activo = 1
+      WHERE a.activo = 1
+      GROUP BY a.id
+      ORDER BY a.nombre
+    `).all();
+
+    actividades.forEach(a => {
+      a.instructores = a.instructores_str ? a.instructores_str.split('|') : [];
+      delete a.instructores_str;
+    });
+
     res.json({ success: true, actividades });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
