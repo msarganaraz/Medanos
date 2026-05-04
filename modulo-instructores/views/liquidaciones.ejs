@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Liquidaciones — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-primary { background: #7a8c2e; color: white; }
+        .btn-primary:hover { background: #5a6c1e; transform: translateY(-2px); }
+        .content-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-borrador { background: #fecaca; color: #7f1d1d; }
+        .badge-aprobada { background: #fef3c7; color: #92400e; }
+        .badge-pagada { background: #d1fae5; color: #065f46; }
+        .btn-action { padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; margin-right: 5px; font-family: 'DM Sans'; }
+        .btn-action.btn-primary { background: #10b981; color: white; }
+        .btn-action.btn-success { background: #059669; color: white; }
+        .btn-action:hover { opacity: 0.8; }
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Liquidaciones de Instructores</h1>
+            <p>Generación, aprobación y pago de liquidaciones mensuales</p>
+        </div>
+
+        <div class="top-bar">
+            <button class="btn btn-primary" onclick="abrirModalGenerar()">+ Generar liquidación</button>
+            <a href="/instructores" class="btn btn-primary">← Volver a instructores</a>
+        </div>
+
+        <div class="content-card">
+            <table id="liquidacionesTable">
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Instructor</th>
+                        <th>Monto calculado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="liquidacionesBody">
+                    <tr><td colspan="5" class="empty-state">Cargando liquidaciones...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modalGenerar" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+        <div style="position: relative; background: white; border-radius: 12px; padding: 30px; max-width: 400px; width: 90%;">
+            <button style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8;" onclick="cerrarModal('modalGenerar')">✕</button>
+            <div style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Generar liquidación</div>
+            <form id="generarForm" onsubmit="generarLiquidacion(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 5px;">Instructor *</label>
+                    <select id="instructor_id" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans';">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 5px;">Período (YYYY-MM) *</label>
+                    <input type="text" id="periodo" placeholder="2026-05" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans';">
+                </div>
+                <div id="extrasFields"></div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1; padding: 10px; background: #2d6219; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans';">Generar</button>
+                    <button type="button" style="flex: 1; padding: 10px; background: #e2e8f0; color: #334155; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans';" onclick="cerrarModal('modalGenerar')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allLiquidaciones = [];
+        let allInstructores = [];
+
+        async function cargarInstructores() {
+            try {
+                const r = await fetch('/api/instructores', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allInstructores = d.instructores || [];
+                    const select = document.getElementById('instructor_id');
+                    select.innerHTML = '<option value="">Seleccionar...</option>' + allInstructores.map(i => `<option value="${i.id}">${i.apellido}, ${i.nombre}</option>`).join('');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function cargarLiquidaciones() {
+            try {
+                const r = await fetch('/api/liquidaciones', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allLiquidaciones = d.liquidaciones || [];
+                    renderLiquidaciones();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderLiquidaciones() {
+            const body = document.getElementById('liquidacionesBody');
+            if (allLiquidaciones.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">No hay liquidaciones</td></tr>';
+                return;
+            }
+            body.innerHTML = allLiquidaciones.map(l => `
+                <tr>
+                    <td>${l.periodo}</td>
+                    <td>${l.apellido}, ${l.nombre}</td>
+                    <td>$${l.monto_calculado.toFixed(2)}</td>
+                    <td><span class="badge badge-${l.estado.toLowerCase()}">${l.estado}</span></td>
+                    <td>
+                        ${l.estado === 'BORRADOR' ? `<button class="btn-action btn-primary" onclick="aprobarLiquidacion(${l.id})">Aprobar</button>` : ''}
+                        ${l.estado === 'APROBADA' ? `<button class="btn-action btn-success" onclick="pagarLiquidacion(${l.id})">Pagar</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirModalGenerar() {
+            document.getElementById('modalGenerar').style.display = 'flex';
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        async function generarLiquidacion(e) {
+            e.preventDefault();
+            const instructor_id = parseInt(document.getElementById('instructor_id').value);
+            const periodo = document.getElementById('periodo').value;
+            try {
+                const r = await fetch('/api/liquidaciones/generar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ instructor_id, periodo, horas: 0, alumnos: 0 })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalGenerar');
+                    cargarLiquidaciones();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function aprobarLiquidacion(id) {
+            try {
+                const r = await fetch(`/api/liquidaciones/${id}/aprobar`, { method: 'POST', credentials: 'include' });
+                const d = await r.json();
+                if (d.success) cargarLiquidaciones();
+                else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        async function pagarLiquidacion(id) {
+            if (!confirm('¿Pagar esta liquidación?')) return;
+            try {
+                const r = await fetch(`/api/liquidaciones/${id}/pagar`, { method: 'POST', credentials: 'include' });
+                const d = await r.json();
+                if (d.success) cargarLiquidaciones();
+                else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        cargarInstructores();
+        cargarLiquidaciones();
+    </script>
+</body>
+</html>
