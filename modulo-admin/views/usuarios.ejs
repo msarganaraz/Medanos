@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Usuarios — Admin — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+
+        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-primary { background: #2d6219; color: white; }
+        .btn-primary:hover { background: #1f4511; transform: translateY(-2px); }
+        .btn-secondary { background: #e2e8f0; color: #334155; }
+        .btn-secondary:hover { background: #cbd5e1; }
+
+        .content-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; }
+
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .badge-recepcion { background: #dbeafe; color: #1e40af; }
+        .badge-tesoreria { background: #dcfce7; color: #166534; }
+        .badge-instructor { background: #fef3c7; color: #92400e; }
+
+        .btn-action { padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; margin-right: 5px; transition: all 0.2s; font-family: 'DM Sans'; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-edit:hover { background: #2563eb; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+        .modal-header { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .modal-close { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .form-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'DM Sans'; }
+        .form-actions .btn-submit { background: #2d6219; color: white; }
+        .form-actions .btn-cancel { background: #e2e8f0; color: #334155; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Administración de Usuarios</h1>
+            <p>Crear, editar y gestionar usuarios del sistema</p>
+        </div>
+
+        <div class="top-bar">
+            <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo usuario</button>
+        </div>
+
+        <div class="content-card">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre o usuario..." onkeyup="filtrarUsuarios()">
+            </div>
+
+            <table id="usuariosTable">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usuariosBody">
+                    <tr><td colspan="5" class="empty-state">Cargando usuarios...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar -->
+    <div class="modal" id="modalUsuario">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalUsuario')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header" id="modalTitle">Nuevo usuario</div>
+                <form id="usuarioForm" onsubmit="guardarUsuario(event)">
+                    <div class="form-group">
+                        <label>Usuario *</label>
+                        <input type="text" id="username" placeholder="ej: jgarcia" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre completo *</label>
+                        <input type="text" id="nombre" placeholder="ej: Juan García" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Rol *</label>
+                        <select id="rol" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="admin">Administrador</option>
+                            <option value="recepcion">Recepción</option>
+                            <option value="tesoreria">Tesorería</option>
+                            <option value="instructor">Instructor</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label>Contraseña *</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="activo" checked> Activo
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Guardar</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalUsuario')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar contraseña -->
+    <div class="modal" id="modalPassword">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalPassword')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Cambiar contraseña</div>
+                <form id="passwordForm" onsubmit="cambiarContraseña(event)">
+                    <div class="form-group">
+                        <label>Contraseña actual *</label>
+                        <input type="password" id="passwordActual" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña nueva *</label>
+                        <input type="password" id="passwordNueva" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Actualizar</button>
+                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalPassword')">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allUsuarios = [];
+        let editandoId = null;
+
+        async function cargarUsuarios() {
+            try {
+                const r = await fetch('/api/admin/usuarios', { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    allUsuarios = d.usuarios || [];
+                    renderUsuarios();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderUsuarios() {
+            const body = document.getElementById('usuariosBody');
+            if (allUsuarios.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">No hay usuarios</td></tr>';
+                return;
+            }
+            body.innerHTML = allUsuarios.map(u => `
+                <tr>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.nombre}</td>
+                    <td><span class="badge badge-${u.rol}">${u.rol.toUpperCase()}</span></td>
+                    <td>${u.activo ? '✓ Activo' : '✗ Inactivo'}</td>
+                    <td>
+                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${u.id})">Editar</button>
+                        <button class="btn-action btn-delete" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarUsuarios() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allUsuarios.filter(u =>
+                u.nombre.toLowerCase().includes(search) ||
+                u.username.toLowerCase().includes(search)
+            );
+            const body = document.getElementById('usuariosBody');
+            if (filtered.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">No hay usuarios que coincidan</td></tr>';
+                return;
+            }
+            body.innerHTML = filtered.map(u => `
+                <tr>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.nombre}</td>
+                    <td><span class="badge badge-${u.rol}">${u.rol.toUpperCase()}</span></td>
+                    <td>${u.activo ? '✓ Activo' : '✗ Inactivo'}</td>
+                    <td>
+                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${u.id})">Editar</button>
+                        <button class="btn-action btn-delete" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirModalCrear() {
+            editandoId = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo usuario';
+            document.getElementById('usuarioForm').reset();
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('username').disabled = false;
+            document.getElementById('modalUsuario').classList.add('active');
+        }
+
+        async function abrirModalEditar(id) {
+            try {
+                const r = await fetch(`/api/admin/usuarios/${id}`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    editandoId = id;
+                    document.getElementById('modalTitle').textContent = 'Editar usuario';
+                    document.getElementById('username').value = d.usuario.username;
+                    document.getElementById('nombre').value = d.usuario.nombre;
+                    document.getElementById('rol').value = d.usuario.rol;
+                    document.getElementById('activo').checked = d.usuario.activo;
+                    document.getElementById('passwordGroup').style.display = 'none';
+                    document.getElementById('username').disabled = true;
+                    document.getElementById('modalUsuario').classList.add('active');
+                }
+            } catch (err) {
+                alert('Error al cargar usuario');
+            }
+        }
+
+        async function guardarUsuario(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const nombre = document.getElementById('nombre').value;
+            const rol = document.getElementById('rol').value;
+            const password = document.getElementById('password').value;
+            const activo = document.getElementById('activo').checked;
+
+            if (!username || !nombre || !rol) {
+                alert('Por favor completa los campos requeridos');
+                return;
+            }
+
+            try {
+                if (editandoId) {
+                    const r = await fetch(`/api/admin/usuarios/${editandoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ nombre, rol, activo })
+                    });
+                    const d = await r.json();
+                    if (!d.success) {
+                        alert('Error: ' + d.error);
+                        return;
+                    }
+                } else {
+                    if (!password) {
+                        alert('Contraseña requerida para nuevo usuario');
+                        return;
+                    }
+                    const r = await fetch('/api/admin/usuarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ username, nombre, rol, password })
+                    });
+                    const d = await r.json();
+                    if (!d.success) {
+                        alert('Error: ' + d.error);
+                        return;
+                    }
+                }
+                cerrarModal('modalUsuario');
+                cargarUsuarios();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function cambiarContraseña(e) {
+            e.preventDefault();
+            const usuarioId = <%=usuario.id%>;
+            const passwordActual = document.getElementById('passwordActual').value;
+            const passwordNueva = document.getElementById('passwordNueva').value;
+
+            try {
+                const r = await fetch(`/api/admin/cambiar-contraseña/${usuarioId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ passwordActual, passwordNueva })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    alert('Contraseña actualizada correctamente');
+                    cerrarModal('modalPassword');
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function eliminarUsuario(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
+            alert('Eliminación deshabilitada en esta versión. Usa editar para desactivar.');
+        }
+
+        cargarUsuarios();
+    </script>
+</body>
+</html>

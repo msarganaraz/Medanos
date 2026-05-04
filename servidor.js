@@ -118,8 +118,8 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
     console.error('Error inicializando admin:', err.message);
   }
 
-  // Mountar módulos (cuando estén listos)
-  // servidor.use(require('./modulo-admin/routes/admin.routes'));
+  // Mountar módulos
+  servidor.use(require('./modulo-admin/routes/admin.routes'));
   // servidor.use(require('./modulo-socios/routes/socios.routes'));
   // servidor.use(require('./modulo-actividades/routes/actividades.routes'));
   // servidor.use(require('./modulo-instructores/routes/instructores.routes'));
