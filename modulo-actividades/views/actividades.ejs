@@ -5,60 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Actividades — Club Médanos Verdes</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; }
-        .header h1 { font-size: 28px; margin-bottom: 10px; }
-        .header p { opacity: 0.9; }
-
-        .top-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-family: 'DM Sans'; }
-        .btn-primary { background: #4aabd8; color: white; }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
-
-        .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-
-        .activity-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s; border-top: 4px solid #4aabd8; }
-        .activity-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-
-        .card-header { padding: 20px; border-bottom: 1px solid #e2e8f0; }
-        .card-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
-        .card-desc { font-size: 13px; color: #64748b; }
-
-        .card-body { padding: 15px 20px; }
-        .card-detail { font-size: 13px; margin-bottom: 8px; }
-        .card-detail-label { color: #94a3b8; }
-        .card-detail-value { color: #1e293b; font-weight: 500; }
-
-        .card-actions { padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; }
-        .btn-action { flex: 1; padding: 8px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; font-family: 'DM Sans'; transition: all 0.2s; }
-        .btn-edit { background: #3b82f6; color: white; }
-        .btn-edit:hover { background: #2563eb; }
-        .btn-config { background: #10b981; color: white; }
-        .btn-config:hover { background: #059669; }
-
-        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-bar input { flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 16px; padding: 40px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
-        .modal-header { font-size: 22px; font-weight: 700; margin-bottom: 30px; color: #1e293b; }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; transition: all 0.2s; }
-        .modal-close:hover { color: #1e293b; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #334155; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: 'DM Sans'; font-size: 14px; transition: all 0.2s; background: white; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2d6219; box-shadow: 0 0 0 3px rgba(45, 98, 25, 0.1); }
-        .form-actions { display: flex; gap: 12px; margin-top: 32px; }
-        .form-actions button { flex: 1; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'DM Sans'; font-size: 14px; transition: all 0.2s; }
-        .form-actions .btn-submit { background: #2d6219; color: white; }
-        .form-actions .btn-submit:hover { background: #1f4511; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(45, 98, 25, 0.2); }
-        .form-actions .btn-cancel { background: #f1f5f9; color: #334155; border: 1.5px solid #e2e8f0; }
-        .form-actions .btn-cancel:hover { background: #e2e8f0; border-color: #cbd5e1; }
+        .card-desc { font-size: var(--text-sm); color: var(--neutral-500); }
+        .card-detail { font-size: var(--text-sm); margin-bottom: var(--space-sm); }
+        .card-detail-label { color: var(--neutral-400); }
+        .card-detail-value { color: var(--neutral-900); font-weight: var(--weight-semibold); }
     </style>
 </head>
 <body>
