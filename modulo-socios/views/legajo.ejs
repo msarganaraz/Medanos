@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Legajo — Club Médanos Verdes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+
+        .header { background: linear-gradient(90deg, #2d6219, #4a8c2a); color: white; padding: 30px 20px; margin: -20px -20px 30px -20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+        .btn-back { padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px; cursor: pointer; font-family: 'DM Sans'; transition: all 0.2s; }
+        .btn-back:hover { background: rgba(255,255,255,0.3); }
+
+        .profile-card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .profile-header { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+        .profile-field { margin-bottom: 15px; }
+        .profile-label { font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 3px; }
+        .profile-value { font-size: 16px; font-weight: 500; color: #1e293b; }
+
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #1e293b; border-bottom: 2px solid #2d6219; padding-bottom: 10px; }
+
+        .activities-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .activity-card { background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2d6219; }
+        .activity-name { font-weight: 600; color: #1e293b; }
+        .activity-date { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+
+        .content-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 600; font-size: 13px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-pagada { background: #d1fae5; color: #065f46; }
+        .badge-pendiente { background: #fecaca; color: #7f1d1d; }
+        .badge-vencida { background: #fef3c7; color: #92400e; }
+
+        .empty-state { text-align: center; padding: 30px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 id="socioNombre">Cargando...</h1>
+                <p id="socioNumero">Socio #</p>
+            </div>
+            <button class="btn-back" onclick="window.location.href='/socios'">← Volver a socios</button>
+        </div>
+
+        <!-- Datos personales -->
+        <div class="profile-card">
+            <div class="section-title">Datos personales</div>
+            <div class="profile-header">
+                <div>
+                    <div class="profile-field">
+                        <div class="profile-label">Apellido</div>
+                        <div class="profile-value" id="profileApellido">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">Nombre</div>
+                        <div class="profile-value" id="profileNombre">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">DNI</div>
+                        <div class="profile-value" id="profileDni">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">Fecha de nacimiento</div>
+                        <div class="profile-value" id="profileFechaNac">—</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="profile-field">
+                        <div class="profile-label">Teléfono</div>
+                        <div class="profile-value" id="profileTelefono">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">Email</div>
+                        <div class="profile-value" id="profileEmail">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">Domicilio</div>
+                        <div class="profile-value" id="profileDomicilio">—</div>
+                    </div>
+                    <div class="profile-field">
+                        <div class="profile-label">Fecha de alta</div>
+                        <div class="profile-value" id="profileFechaAlta">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividades -->
+        <div class="content-card">
+            <div class="section-title">Actividades en las que participa</div>
+            <div class="activities-grid" id="activitiesGrid">
+                <div class="empty-state">Cargando actividades...</div>
+            </div>
+        </div>
+
+        <!-- Historial de pagos -->
+        <div class="content-card">
+            <div class="section-title">Historial de pagos (últimos 10)</div>
+            <table id="pagosTable">
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Monto cuota</th>
+                        <th>Fecha de pago</th>
+                        <th>Importe pagado</th>
+                        <th>Medio de pago</th>
+                    </tr>
+                </thead>
+                <tbody id="pagosBody">
+                    <tr><td colspan="5" class="empty-state">Cargando pagos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const socioId = <%=socioId%>;
+
+        async function cargarSocio() {
+            try {
+                const r = await fetch(`/api/socios/${socioId}`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    const s = d.socio;
+                    document.getElementById('socioNombre').textContent = `${s.apellido}, ${s.nombre}`;
+                    document.getElementById('socioNumero').textContent = `Socio #${s.numero_socio}`;
+                    document.getElementById('profileApellido').textContent = s.apellido;
+                    document.getElementById('profileNombre').textContent = s.nombre;
+                    document.getElementById('profileDni').textContent = s.dni || '—';
+                    document.getElementById('profileFechaNac').textContent = s.fecha_nacimiento || '—';
+                    document.getElementById('profileTelefono').textContent = s.telefono || '—';
+                    document.getElementById('profileEmail').textContent = s.email || '—';
+                    document.getElementById('profileDomicilio').textContent = s.domicilio || '—';
+                    document.getElementById('profileFechaAlta').textContent = s.fecha_alta;
+
+                    renderActividades(d.actividades);
+                    renderPagos(d.pagos);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderActividades(actividades) {
+            const grid = document.getElementById('activitiesGrid');
+            if (!actividades || actividades.length === 0) {
+                grid.innerHTML = '<div class="empty-state">Sin actividades asignadas</div>';
+                return;
+            }
+            grid.innerHTML = actividades.map(a => `
+                <div class="activity-card">
+                    <div class="activity-name">${a.nombre}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderPagos(pagos) {
+            const body = document.getElementById('pagosBody');
+            if (!pagos || pagos.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty-state">Sin registros de pago</td></tr>';
+                return;
+            }
+            body.innerHTML = pagos.map(p => `
+                <tr>
+                    <td>${p.periodo}</td>
+                    <td>$${p.monto_total.toFixed(2)}</td>
+                    <td>${p.fecha_pago}</td>
+                    <td>$${p.importe.toFixed(2)}</td>
+                    <td>${p.medio_pago || '—'}</td>
+                </tr>
+            `).join('');
+        }
+
+        cargarSocio();
+    </script>
+</body>
+</html>

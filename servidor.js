@@ -120,7 +120,7 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
 
   // Mountar módulos
   servidor.use(require('./modulo-admin/routes/admin.routes'));
-  // servidor.use(require('./modulo-socios/routes/socios.routes'));
+  servidor.use(require('./modulo-socios/routes/socios.routes'));
   // servidor.use(require('./modulo-actividades/routes/actividades.routes'));
   // servidor.use(require('./modulo-instructores/routes/instructores.routes'));
   // servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
