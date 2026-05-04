@@ -31,6 +31,46 @@ async function initDB() {
   db.run('PRAGMA foreign_keys = ON');
   console.log('✓ Base de datos conectada');
 
+  // Auto-migrate: agregar columnas/tablas que falten
+  try {
+    // Agregar columna tiene_horarios_flexibles si no existe
+    const checkColumn = db.prepare(`PRAGMA table_info(actividades)`).all();
+    if (!checkColumn.some(col => col.name === 'tiene_horarios_flexibles')) {
+      db.run('ALTER TABLE actividades ADD COLUMN tiene_horarios_flexibles INTEGER DEFAULT 0');
+      console.log('✓ Migración: agregada columna tiene_horarios_flexibles');
+    }
+
+    // Crear tabla franjas_horarias si no existe
+    db.run(`CREATE TABLE IF NOT EXISTS franjas_horarias (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      actividad_id INTEGER REFERENCES actividades(id),
+      dia_semana INTEGER NOT NULL,
+      hora_inicio INTEGER NOT NULL,
+      hora_fin INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Crear tabla socio_franjas si no existe
+    db.run(`CREATE TABLE IF NOT EXISTS socio_franjas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      socio_id INTEGER REFERENCES socios(id),
+      franja_id INTEGER REFERENCES franjas_horarias(id),
+      fecha_desde TEXT NOT NULL,
+      fecha_hasta TEXT
+    )`);
+
+    // Crear tabla instructor_franjas si no existe
+    db.run(`CREATE TABLE IF NOT EXISTS instructor_franjas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      instructor_id INTEGER REFERENCES instructores(id),
+      franja_id INTEGER REFERENCES franjas_horarias(id)
+    )`);
+
+    console.log('✓ Migración: tablas de franjas verificadas');
+  } catch (err) {
+    console.error('⚠ Error en migración:', err.message);
+  }
+
   // Seed database if empty
   const initSeed = require('./init-seed');
   await initSeed();
