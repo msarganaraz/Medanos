@@ -341,6 +341,7 @@
                     alert('Error: ' + d.error);
                     return;
                 }
+                cargarActividades();
                 abrirModalInstructores(actividadModalId);
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -358,6 +359,7 @@
                     alert('Error: ' + d.error);
                     return;
                 }
+                cargarActividades();
                 abrirModalInstructores(actividadModalId);
             } catch (err) {
                 alert('Error: ' + err.message);
