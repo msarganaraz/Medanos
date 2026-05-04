@@ -7,99 +7,210 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <style>
-        .card-desc { font-size: var(--text-sm); color: var(--neutral-500); }
-        .card-detail { font-size: var(--text-sm); margin-bottom: var(--space-sm); }
-        .card-detail-label { color: var(--neutral-400); }
-        .card-detail-value { color: var(--neutral-900); font-weight: var(--weight-semibold); }
+        .franjas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .franja-cell {
+            padding: 12px;
+            background: var(--neutral-50);
+            border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: center;
+            font-size: var(--text-sm);
+        }
+        .franja-cell:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .franja-hora {
+            font-weight: var(--weight-semibold);
+            margin-bottom: 4px;
+        }
+        .franja-count {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .activity-section {
+            margin-bottom: 32px;
+            padding: 20px;
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--neutral-200);
+        }
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .activity-title {
+            font-size: var(--text-xl);
+            font-weight: var(--weight-bold);
+            color: var(--neutral-900);
+        }
+        .activity-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .flexible-activity {
+            padding: 16px;
+            background: var(--neutral-50);
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flexible-count {
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+            color: var(--primary);
+        }
+        .personas-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .persona-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px;
+            background: white;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+        }
+        .persona-name {
+            color: var(--neutral-900);
+        }
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        .empty-message {
+            color: var(--neutral-400);
+            font-size: var(--text-sm);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🏊 Actividades</h1>
-            <p>Natación, tenis, gimnasia y más disciplinas deportivas</p>
+            <p>Gestión de socios e instructores por franja horaria</p>
         </div>
 
-        <div class="top-bar">
-            <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nueva actividad</button>
-            <a href="/dashboard" class="btn btn-secondary">← Volver al dashboard</a>
-        </div>
-
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Buscar actividad..." onkeyup="filtrarActividades()">
-        </div>
-
-        <div class="activities-grid" id="activitiesGrid">
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">Cargando actividades...</div>
+        <div id="activitiesContainer" style="margin-top: 24px;">
+            <div style="text-align: center; padding: 40px; color: #94a3b8;">Cargando actividades...</div>
         </div>
     </div>
 
-    <!-- Modal Crear/Editar -->
-    <div class="modal" id="modalActividad">
+    <!-- Modal: Ver detalles de franja (readonly) -->
+    <div class="modal" id="modalFranjaDetalle">
         <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalActividad')">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalFranjaDetalle')">✕</button>
             <div class="modal-content">
-                <div class="modal-header" id="modalTitle">Nueva actividad</div>
-                <form id="actividadForm" onsubmit="guardarActividad(event)">
-                    <div class="form-group">
-                        <label>Nombre *</label>
-                        <input type="text" id="nombre" required>
+                <div class="modal-header" id="detalleTitle">Franja</div>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 8px;">Socios (readonly)</h4>
+                    <div id="detallesocios" class="personas-list">
+                        <div class="empty-message">Cargando...</div>
                     </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea id="descripcion" rows="3"></textarea>
+                </div>
+
+                <div style="margin-bottom: 20px; border-top: 1px solid var(--neutral-200); padding-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">Instructores (readonly)</h4>
+                    <div id="detalleinstructores" class="personas-list">
+                        <div class="empty-message">Cargando...</div>
                     </div>
-                    <div class="form-group">
-                        <label>Días y horarios</label>
-                        <input type="text" id="dias_horario" placeholder="ej: Lu-Mi-Vi 18:00">
-                    </div>
-                    <div class="form-group">
-                        <label>Precio base</label>
-                        <input type="number" id="precio_base" step="0.01" value="0">
-                    </div>
-                    <div class="form-group" id="activoGroup" style="display: none;">
-                        <label>
-                            <input type="checkbox" id="activo" checked> Activo
-                        </label>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Guardar</button>
-                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalActividad')">Cancelar</button>
-                    </div>
-                </form>
+                </div>
+
+                <div style="border-top: 1px solid var(--neutral-200); padding-top: 16px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalFranjaDetalle')">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Instructores -->
-    <div class="modal" id="modalInstructores">
+    <!-- Modal: Gestionar franja -->
+    <div class="modal" id="modalGestionarFranja">
         <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalInstructores')">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalGestionarFranja')">✕</button>
             <div class="modal-content">
-                <div class="modal-header" id="instructoresTitle">Instructores</div>
+                <div class="modal-header">Gestionar Franja</div>
 
                 <div style="margin-bottom: 24px;">
-                    <h4 style="font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: 12px; color: var(--neutral-900);">Instructores asignados</h4>
-                    <div id="instructoresAsignados" style="display: flex; flex-direction: column; gap: 8px;">
-                        <div style="color: var(--neutral-400); font-size: var(--text-sm);">Cargando...</div>
+                    <h4 style="margin-bottom: 12px;">Socios asignados</h4>
+                    <div id="gestionsocios" class="personas-list">
+                        <div class="empty-message">Cargando...</div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirModalAgregarSocio()">+ Agregar socio</button>
                     </div>
                 </div>
 
-                <div style="border-top: 1px solid var(--neutral-200); padding-top: 24px; margin-bottom: 24px;">
-                    <h4 style="font-size: var(--text-lg); font-weight: var(--weight-semibold); margin-bottom: 12px; color: var(--neutral-900);">Asignar nuevo</h4>
-                    <div style="display: flex; gap: 12px; align-items: flex-end;">
-                        <div style="flex: 1;">
-                            <label style="display: block; font-size: var(--text-sm); font-weight: var(--weight-semibold); margin-bottom: 8px; color: var(--neutral-700);">Instructor</label>
-                            <select id="selectInstructor" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md); font-family: var(--font-sans);">
-                                <option value="">Seleccionar instructor...</option>
-                            </select>
-                        </div>
-                        <button type="button" class="btn btn-primary" style="white-space: nowrap;" onclick="asignarInstructorActividad()">Asignar</button>
+                <div style="margin-bottom: 24px; border-top: 1px solid var(--neutral-200); padding-top: 16px;">
+                    <h4 style="margin-bottom: 12px;">Instructores asignados</h4>
+                    <div id="gestioninstructores" class="personas-list">
+                        <div class="empty-message">Cargando...</div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirModalAgregarInstructor()">+ Agregar instructor</button>
                     </div>
                 </div>
 
-                <div style="border-top: 1px solid var(--neutral-200); padding-top: 24px; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalInstructores')">Cerrar</button>
+                <div style="border-top: 1px solid var(--neutral-200); padding-top: 16px; text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar socio -->
+    <div class="modal" id="modalAgregarSocio">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalAgregarSocio')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Agregar Socio</div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Seleccionar socio:</label>
+                    <select id="selectSocio" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md);">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalAgregarSocio')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarAgregarSocio()">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar instructor -->
+    <div class="modal" id="modalAgregarInstructor">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalAgregarInstructor')">✕</button>
+            <div class="modal-content">
+                <div class="modal-header">Agregar Instructor</div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Seleccionar instructor:</label>
+                    <select id="selectInstructor" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md);">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalAgregarInstructor')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarAgregarInstructor()">Agregar</button>
                 </div>
             </div>
         </div>
@@ -107,7 +218,10 @@
 
     <script>
         let allActividades = [];
-        let editandoId = null;
+        let franjaActual = null;
+        let actividadActual = null;
+
+        const diasNombre = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
 
         async function cargarActividades() {
             try {
@@ -123,247 +237,251 @@
         }
 
         function renderActividades() {
-            const grid = document.getElementById('activitiesGrid');
+            const container = document.getElementById('activitiesContainer');
             if (allActividades.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">No hay actividades</div>';
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No hay actividades</div>';
                 return;
             }
-            grid.innerHTML = allActividades.map(a => `
-                <div class="activity-card">
-                    <div class="card-header">
-                        <div class="card-title">${a.nombre}</div>
-                        <div class="card-desc">${a.descripcion || 'Sin descripción'}</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-detail">
-                            <span class="card-detail-label">Horario:</span>
-                            <span class="card-detail-value">${a.dias_horario || 'Sin definir'}</span>
-                        </div>
-                        <div class="card-detail">
-                            <span class="card-detail-label">Precio base:</span>
-                            <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
-                        </div>
-                        <div class="card-detail">
-                            <span class="card-detail-label">Instructores:</span>
-                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
-                                ${a.instructores && a.instructores.length > 0
-                                  ? a.instructores.map(n => `<span class="badge badge-activo">${n}</span>`).join('')
-                                  : '<span style="color: var(--neutral-400); font-size: 12px;">Sin asignar</span>'}
+
+            let html = '';
+            allActividades.forEach(act => {
+                if (act.tiene_horarios_flexibles) {
+                    html += `
+                        <div class="activity-section">
+                            <div class="activity-header">
+                                <div class="activity-title">${act.nombre}</div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionFlexible(${act.id})">➕ Gestionar</button>
+                                </div>
+                            </div>
+                            <div class="flexible-activity">
+                                <span>Acceso libre (sin franjas definidas)</span>
+                                <span class="flexible-count">${act.socios_count || 0} socios</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${a.id})">Editar</button>
-                        <button class="btn-action btn-config" onclick="abrirModalInstructores(${a.id})">Instructores</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filtrarActividades() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allActividades.filter(a =>
-                a.nombre.toLowerCase().includes(search) ||
-                (a.descripcion && a.descripcion.toLowerCase().includes(search))
-            );
-            const grid = document.getElementById('activitiesGrid');
-            if (filtered.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">No hay actividades que coincidan</div>';
-                return;
-            }
-            grid.innerHTML = filtered.map(a => `
-                <div class="activity-card">
-                    <div class="card-header">
-                        <div class="card-title">${a.nombre}</div>
-                        <div class="card-desc">${a.descripcion || 'Sin descripción'}</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-detail">
-                            <span class="card-detail-label">Horario:</span>
-                            <span class="card-detail-value">${a.dias_horario || 'Sin definir'}</span>
-                        </div>
-                        <div class="card-detail">
-                            <span class="card-detail-label">Precio base:</span>
-                            <span class="card-detail-value">$${a.precio_base.toFixed(2)}</span>
-                        </div>
-                        <div class="card-detail">
-                            <span class="card-detail-label">Instructores:</span>
-                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
-                                ${a.instructores && a.instructores.length > 0
-                                  ? a.instructores.map(n => `<span class="badge badge-activo">${n}</span>`).join('')
-                                  : '<span style="color: var(--neutral-400); font-size: 12px;">Sin asignar</span>'}
+                    `;
+                } else {
+                    html += `
+                        <div class="activity-section">
+                            <div class="activity-header">
+                                <div class="activity-title">${act.nombre}</div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionActividad(${act.id})">⚙️ Gestionar</button>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
+                                ${(act.franjas || []).map(f => {
+                                    const hora = \`\${String(f.hora_inicio).padStart(2, '0')}:00-\${String(f.hora_fin).padStart(2, '0')}:00\`;
+                                    return \`
+                                        <div class="franja-cell" onclick="abrirDetallesFranja(\${f.id})">
+                                            <div class="franja-hora">\${diasNombre[f.dia_semana]}</div>
+                                            <div class="franja-hora">\${hora}</div>
+                                            <div class="franja-count">\${f.socios_count || 0} socios | \${f.instructores_count || 0} profes</div>
+                                        </div>
+                                    \`;
+                                }).join('')}
                             </div>
                         </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-action btn-edit" onclick="abrirModalEditar(${a.id})">Editar</button>
-                        <button class="btn-action btn-config" onclick="abrirModalInstructores(${a.id})">Instructores</button>
-                    </div>
-                </div>
-            `).join('');
+                    `;
+                }
+            });
+            container.innerHTML = html;
         }
 
-        function abrirModalCrear() {
-            editandoId = null;
-            document.getElementById('modalTitle').textContent = 'Nueva actividad';
-            document.getElementById('actividadForm').reset();
-            document.getElementById('activoGroup').style.display = 'none';
-            document.getElementById('modalActividad').classList.add('active');
-        }
-
-        async function abrirModalEditar(id) {
+        async function abrirDetallesFranja(franjaId) {
             try {
-                const r = await fetch(`/api/actividades/${id}`, { credentials: 'include' });
+                const r = await fetch(\`/api/franjas/\${franjaId}\`, { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
-                    const a = d.actividad;
-                    editandoId = id;
-                    document.getElementById('modalTitle').textContent = 'Editar actividad';
-                    document.getElementById('nombre').value = a.nombre;
-                    document.getElementById('descripcion').value = a.descripcion || '';
-                    document.getElementById('dias_horario').value = a.dias_horario || '';
-                    document.getElementById('precio_base').value = a.precio_base || 0;
-                    document.getElementById('activo').checked = a.activo;
-                    document.getElementById('activoGroup').style.display = 'block';
-                    document.getElementById('modalActividad').classList.add('active');
-                }
-            } catch (err) {
-                alert('Error al cargar actividad');
-            }
-        }
+                    const f = d.franja;
+                    document.getElementById('detalleTitle').textContent = \`\${f.actividad_nombre} - \${diasNombre[f.dia_semana]} \${f.hora_inicio}:00-\${f.hora_fin}:00\`;
 
-        async function guardarActividad(e) {
-            e.preventDefault();
-            const nombre = document.getElementById('nombre').value;
-            const descripcion = document.getElementById('descripcion').value;
-            const dias_horario = document.getElementById('dias_horario').value;
-            const precio_base = parseFloat(document.getElementById('precio_base').value);
+                    const sociosHtml = (d.socios || []).length === 0
+                        ? '<div class="empty-message">Sin socios asignados</div>'
+                        : d.socios.map(s => \`<div class="persona-item"><span class="persona-name">\${s.apellido}, \${s.nombre}</span></div>\`).join('');
+                    document.getElementById('detallesocios').innerHTML = sociosHtml;
 
-            try {
-                if (editandoId) {
-                    const activo = document.getElementById('activo').checked;
-                    const r = await fetch(`/api/actividades/${editandoId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ nombre, descripcion, dias_horario, precio_base, activo })
-                    });
-                    const d = await r.json();
-                    if (!d.success) {
-                        alert('Error: ' + d.error);
-                        return;
-                    }
-                } else {
-                    const r = await fetch('/api/actividades', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ nombre, descripcion, dias_horario, precio_base })
-                    });
-                    const d = await r.json();
-                    if (!d.success) {
-                        alert('Error: ' + d.error);
-                        return;
-                    }
+                    const instructoresHtml = (d.instructores || []).length === 0
+                        ? '<div class="empty-message">Sin instructores asignados</div>'
+                        : d.instructores.map(i => \`<div class="persona-item"><span class="persona-name">\${i.apellido}, \${i.nombre}</span></div>\`).join('');
+                    document.getElementById('detalleinstructores').innerHTML = instructoresHtml;
+
+                    document.getElementById('modalFranjaDetalle').classList.add('active');
                 }
-                cerrarModal('modalActividad');
-                cargarActividades();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
         }
 
-        function cerrarModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        let actividadModalId = null;
-
-        async function abrirModalInstructores(id) {
-            actividadModalId = id;
-            const actividad = allActividades.find(a => a.id === id);
-            document.getElementById('instructoresTitle').textContent = `Instructores de ${actividad.nombre}`;
-
+        async function abrirGestionActividad(actividadId) {
+            actividadActual = actividadId;
             try {
-                // Cargar instructores asignados a esta actividad
-                const r1 = await fetch(`/api/actividades/${id}`, { credentials: 'include' });
-                const d1 = await r1.json();
-                const asignados = d1.instructores || [];
-
-                // Cargar todos los instructores activos
-                const r2 = await fetch('/api/instructores', { credentials: 'include' });
-                const d2 = await r2.json();
-                const todos = d2.instructores || [];
-
-                // Renderizar asignados
-                const asignadosHtml = asignados.length === 0
-                    ? '<div style="color: var(--neutral-400); font-size: var(--text-sm);">Sin instructores asignados</div>'
-                    : asignados.map(i => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
-                            <span style="font-size: var(--text-sm);">${i.apellido}, ${i.nombre}</span>
-                            <button type="button" class="btn btn-danger btn-sm" style="padding: 6px 12px; font-size: 12px;" onclick="desasignarInstructor(${i.id})">Quitar</button>
-                        </div>
-                    `).join('');
-
-                document.getElementById('instructoresAsignados').innerHTML = asignadosHtml;
-
-                // Renderizar dropdown de disponibles
-                const disponibles = todos.filter(t => !asignados.some(a => a.id === t.id));
-                const selectHtml = '<option value="">Seleccionar instructor...</option>' +
-                    disponibles.map(i => `<option value="${i.id}">${i.apellido}, ${i.nombre}</option>`).join('');
-
-                document.getElementById('selectInstructor').innerHTML = selectHtml;
-
-                // Abrir modal
-                document.getElementById('modalInstructores').classList.add('active');
+                const r = await fetch(\`/api/actividades/\${actividadId}\`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success && d.franjas && d.franjas.length > 0) {
+                    franjaActual = d.franjas[0].id;
+                    await cargarDetallesFranja();
+                    document.getElementById('modalGestionarFranja').classList.add('active');
+                }
             } catch (err) {
-                alert('Error al cargar instructores: ' + err.message);
                 console.error(err);
             }
         }
 
-        async function asignarInstructorActividad() {
-            const instructorId = document.getElementById('selectInstructor').value;
-            if (!instructorId) {
-                alert('Por favor selecciona un instructor');
+        async function cargarDetallesFranja() {
+            try {
+                const r = await fetch(\`/api/franjas/\${franjaActual}\`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    const sociosHtml = (d.socios || []).length === 0
+                        ? '<div class="empty-message">Sin socios asignados</div>'
+                        : d.socios.map(s => \`
+                            <div class="persona-item">
+                                <span class="persona-name">\${s.apellido}, \${s.nombre}</span>
+                                <button class="remove-btn" onclick="quitarSocio(\${franjaActual}, \${s.id})">✕</button>
+                            </div>
+                        \`).join('');
+                    document.getElementById('gestionsocios').innerHTML = sociosHtml;
+
+                    const instructoresHtml = (d.instructores || []).length === 0
+                        ? '<div class="empty-message">Sin instructores asignados</div>'
+                        : d.instructores.map(i => \`
+                            <div class="persona-item">
+                                <span class="persona-name">\${i.apellido}, \${i.nombre}</span>
+                                <button class="remove-btn" onclick="quitarInstructor(\${franjaActual}, \${i.id})">✕</button>
+                            </div>
+                        \`).join('');
+                    document.getElementById('gestioninstructores').innerHTML = instructoresHtml;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function abrirModalAgregarSocio() {
+            try {
+                const r = await fetch(\`/api/franjas/\${franjaActual}/socios/disponibles\`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    const options = d.socios.map(s => \`<option value="\${s.id}">\${s.apellido}, \${s.nombre}</option>\`).join('');
+                    document.getElementById('selectSocio').innerHTML = \`<option value="">Seleccionar...</option>\${options}\`;
+                    document.getElementById('modalAgregarSocio').classList.add('active');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function confirmarAgregarSocio() {
+            const socioId = document.getElementById('selectSocio').value;
+            if (!socioId) {
+                alert('Selecciona un socio');
                 return;
             }
-
             try {
-                const r = await fetch(`/api/actividades/${actividadModalId}/instructores`, {
+                const r = await fetch(\`/api/franjas/\${franjaActual}/socios\`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ socio_id: parseInt(socioId) })
+                });
+                const d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalAgregarSocio');
+                    await cargarDetallesFranja();
+                    await cargarActividades();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function quitarSocio(franjaId, socioId) {
+            if (!confirm('¿Quitar socio de esta franja?')) return;
+            try {
+                const r = await fetch(\`/api/franjas/\${franjaId}/socios/\${socioId}\`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                const d = await r.json();
+                if (d.success) {
+                    await cargarDetallesFranja();
+                    await cargarActividades();
+                } else {
+                    alert('Error: ' + d.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function abrirModalAgregarInstructor() {
+            try {
+                const r = await fetch(\`/api/franjas/\${franjaActual}/instructores/disponibles\`, { credentials: 'include' });
+                const d = await r.json();
+                if (d.success) {
+                    const options = d.instructores.map(i => \`<option value="\${i.id}">\${i.apellido}, \${i.nombre}</option>\`).join('');
+                    document.getElementById('selectInstructor').innerHTML = \`<option value="">Seleccionar...</option>\${options}\`;
+                    document.getElementById('modalAgregarInstructor').classList.add('active');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function confirmarAgregarInstructor() {
+            const instructorId = document.getElementById('selectInstructor').value;
+            if (!instructorId) {
+                alert('Selecciona un instructor');
+                return;
+            }
+            try {
+                const r = await fetch(\`/api/franjas/\${franjaActual}/instructores\`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ instructor_id: parseInt(instructorId) })
                 });
                 const d = await r.json();
-                if (!d.success) {
+                if (d.success) {
+                    cerrarModal('modalAgregarInstructor');
+                    await cargarDetallesFranja();
+                    await cargarActividades();
+                } else {
                     alert('Error: ' + d.error);
-                    return;
                 }
-                cargarActividades();
-                abrirModalInstructores(actividadModalId);
             } catch (err) {
                 alert('Error: ' + err.message);
             }
         }
 
-        async function desasignarInstructor(instructorId) {
+        async function quitarInstructor(franjaId, instructorId) {
+            if (!confirm('¿Quitar instructor de esta franja?')) return;
             try {
-                const r = await fetch(`/api/actividades/${actividadModalId}/instructores/${instructorId}`, {
+                const r = await fetch(\`/api/franjas/\${franjaId}/instructores/\${instructorId}\`, {
                     method: 'DELETE',
                     credentials: 'include'
                 });
                 const d = await r.json();
-                if (!d.success) {
+                if (d.success) {
+                    await cargarDetallesFranja();
+                    await cargarActividades();
+                } else {
                     alert('Error: ' + d.error);
-                    return;
                 }
-                cargarActividades();
-                abrirModalInstructores(actividadModalId);
             } catch (err) {
                 alert('Error: ' + err.message);
             }
+        }
+
+        function abrirGestionFlexible(actividadId) {
+            alert('Gestión de actividades flexibles próximamente');
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
         }
 
         cargarActividades();
