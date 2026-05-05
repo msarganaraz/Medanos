@@ -5,7 +5,8 @@ const {
   agregarSocioAFranja,
   quitarSocioDeFranja,
   agregarInstructorAFranja,
-  quitarInstructorDeFranja
+  quitarInstructorDeFranja,
+  eliminarFranja: eliminarFranjaService
 } = require('../services/franjas.service');
 
 function obtenerActividades(req, res) {
@@ -249,6 +250,26 @@ function obtenerInstructoresDisponibles(req, res) {
   }
 }
 
+function eliminarFranjaHandler(req, res) {
+  const { franja_id } = req.params;
+  try {
+    eliminarFranjaService(franja_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function desactivarActividad(req, res) {
+  const { id } = req.params;
+  try {
+    db.prepare('UPDATE actividades SET activo = 0 WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 module.exports = {
   obtenerActividades,
   obtenerActividad,
@@ -261,5 +282,7 @@ module.exports = {
   agregarInstructorFranja,
   quitarInstructorFranja,
   obtenerSociosDisponibles,
-  obtenerInstructoresDisponibles
+  obtenerInstructoresDisponibles,
+  eliminarFranjaHandler,
+  desactivarActividad
 };

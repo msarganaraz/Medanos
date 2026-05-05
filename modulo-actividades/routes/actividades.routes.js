@@ -11,7 +11,9 @@ const {
   agregarInstructorFranja,
   quitarInstructorFranja,
   obtenerSociosDisponibles,
-  obtenerInstructoresDisponibles
+  obtenerInstructoresDisponibles,
+  eliminarFranjaHandler,
+  desactivarActividad
 } = require('../controllers/actividades.controller');
 const { requireRole } = require('../../middleware/auth');
 
@@ -52,6 +54,12 @@ router.get('/api/franjas/:franja_id/socios/disponibles', (req, res) => obtenerSo
 
 // Get available instructores for a franja
 router.get('/api/franjas/:franja_id/instructores/disponibles', (req, res) => obtenerInstructoresDisponibles(req, res));
+
+// Delete franja (cascade: socio_franjas + instructor_franjas)
+router.delete('/api/franjas/:franja_id', requireRole(['admin']), (req, res) => eliminarFranjaHandler(req, res));
+
+// Desactivar actividad (soft delete)
+router.delete('/api/actividades/:id', requireRole(['admin']), (req, res) => desactivarActividad(req, res));
 
 // View (EJS page)
 router.get('/actividades', (req, res) => {

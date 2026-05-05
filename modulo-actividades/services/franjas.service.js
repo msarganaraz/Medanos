@@ -123,11 +123,23 @@ function quitarInstructorDeFranja(franja_id, instructor_id) {
   }
 }
 
+function eliminarFranja(franja_id) {
+  try {
+    db.prepare('DELETE FROM socio_franjas WHERE franja_id = ?').run(franja_id);
+    db.prepare('DELETE FROM instructor_franjas WHERE franja_id = ?').run(franja_id);
+    db.prepare('DELETE FROM franjas_horarias WHERE id = ?').run(franja_id);
+    return { success: true };
+  } catch (err) {
+    throw new Error('Error eliminando franja: ' + err.message);
+  }
+}
+
 module.exports = {
   obtenerFranjasActividad,
   obtenerDetallesFranja,
   agregarSocioAFranja,
   quitarSocioDeFranja,
   agregarInstructorAFranja,
-  quitarInstructorDeFranja
+  quitarInstructorDeFranja,
+  eliminarFranja
 };

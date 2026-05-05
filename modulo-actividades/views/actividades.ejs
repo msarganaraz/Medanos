@@ -48,6 +48,26 @@
         }
         .act-gestionar { color: var(--primary); font-weight: 700; font-size: 13px; }
 
+        /* ── DRAG SELECTION ── */
+        .grilla-slot.seleccionado {
+            background: rgba(76,175,80,0.25) !important;
+            border: 2px solid var(--primary) !important;
+            color: var(--primary) !important;
+        }
+        /* ── CELDA SUBDIVIDIDA (cuartos de hora) ── */
+        .grilla-slot.subdividida {
+            padding: 2px; display: grid;
+            grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+            gap: 2px; min-height: 48px;
+        }
+        .quarter-slot {
+            border-radius: 3px; font-size: 9px; font-weight: 700;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.1s; line-height: 1.2;
+        }
+        .quarter-slot.ocupado { background: var(--primary); color: white; }
+        .quarter-slot.vacio { background: var(--neutral-100); border: 1px dashed var(--neutral-300); color: var(--neutral-400); }
+        .quarter-slot.vacio:hover { background: #e8f5e9; border-color: var(--primary); color: var(--primary); }
         /* ── PLANTILLAS RÁPIDAS ── */
         .template-bar {
             display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -190,8 +210,9 @@
         <div id="vistaDetalle" style="display:none;">
             <div class="detalle-header">
                 <button class="btn-volver" onclick="volverALista()">&#8592; Volver</button>
-                <h2 id="detalleNombre" style="margin:0;font-size:var(--text-2xl);"></h2>
-                <span id="detalleDesc" style="color:var(--neutral-500);font-size:var(--text-sm);"></span>
+                <h2 id="detalleNombre" style="margin:0;font-size:var(--text-2xl);flex:1;"></h2>
+                <span id="detalleDesc" style="color:var(--neutral-500);font-size:var(--text-sm);margin-right:12px;"></span>
+                <button class="btn btn-sm" style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;" onclick="eliminarActividadActual()">Eliminar actividad</button>
             </div>
             <div style="background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-lg);padding:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -236,8 +257,12 @@
                     <div id="gestioninstructores"><div class="empty-message">Cargando...</div></div>
                     <button class="btn btn-primary btn-sm" onclick="abrirBuscadorInstructor()" style="margin-top:10px;">+ Agregar instructor</button>
                 </div>
-                <div style="text-align:right;margin-top:20px;">
-                    <button class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
+                    <button class="btn btn-sm" style="color:#94a3b8;border:1px solid var(--neutral-200);background:white;font-size:12px;" onclick="dividirFranjaEnCuartos()">Dividir en cuartos</button>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm" style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;" onclick="eliminarFranjaActual()">Eliminar franja</button>
+                        <button class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -489,39 +514,52 @@
             actividadActual = null;
         }
 
+        function horaToStr(h) {
+            var horas = Math.floor(h);
+            var mins = Math.round((h - horas) * 60);
+            return (horas < 10 ? '0' + horas : '' + horas) + ':' + (mins < 10 ? '0' + mins : '' + mins);
+        }
+
         function renderGrilla(act) {
-            // Mapear franjas existentes: clave "dia-hora" -> franja
-            var franjaMap = {};
-            (act.franjas || []).forEach(function(f) {
-                franjaMap[f.dia_semana + '-' + f.hora_inicio] = f;
+            var franjas = act.franjas || [];
+
+            // Agrupar por dia-baseHora (para detectar cuartos)
+            var franjaGroups = {};
+            franjas.forEach(function(f) {
+                var baseHora = Math.floor(f.hora_inicio);
+                var key = f.dia_semana + '-' + baseHora;
+                if (!franjaGroups[key]) franjaGroups[key] = [];
+                franjaGroups[key].push(f);
             });
 
             var html = '';
-
-            // Cabecera
-            html += '<div class="grilla-header"></div>'; // celda vacia esquina
+            html += '<div class="grilla-header"></div>';
             for (var d = 0; d < 7; d++) {
                 html += '<div class="grilla-header">' + diasCorto[d] + '</div>';
             }
 
-            // Filas de horas
             for (var h = HORA_INICIO; h < HORA_FIN; h++) {
-                var horaLabel = (h < 10 ? '0' + h : h) + ':00';
-                html += '<div class="grilla-hora">' + horaLabel + '</div>';
-
+                html += '<div class="grilla-hora">' + horaToStr(h) + '</div>';
                 for (var dia = 0; dia < 7; dia++) {
-                    var clave = dia + '-' + h;
-                    var franja = franjaMap[clave];
-                    if (franja) {
-                        var socios = franja.socios_count || 0;
-                        var profes = franja.instructores_count || 0;
-                        var sub = profes > 0 ? profes + ' prof' : '';
-                        html += '<div class="grilla-slot ocupado" onclick="abrirGestionFranja(' + franja.id + ',' + act.id + ',' + dia + ',' + h + ')">' +
+                    var key = dia + '-' + h;
+                    var grupo = franjaGroups[key] || [];
+
+                    if (grupo.length === 0) {
+                        html += '<div class="grilla-slot vacio" data-dia="' + dia + '" data-hora="' + h + '"' +
+                            ' onmousedown="startDrag(event,' + dia + ',' + h + ')"' +
+                            ' onmouseenter="onDragEnter(' + dia + ',' + h + ')"' +
+                            ' title="Agregar ' + diasNombre[dia] + ' ' + horaToStr(h) + '">+</div>';
+                    } else if (grupo.length === 1 && grupo[0].hora_inicio === h) {
+                        var f = grupo[0];
+                        var socios = f.socios_count || 0;
+                        var profes = f.instructores_count || 0;
+                        html += '<div class="grilla-slot ocupado" onclick="abrirGestionFranja(' + f.id + ',' + act.id + ',' + dia + ',' + h + ')">' +
                             '<div class="slot-count">' + socios + ' socios</div>' +
-                            (sub ? '<div class="slot-sub">' + sub + '</div>' : '') +
+                            (profes > 0 ? '<div class="slot-sub">' + profes + ' prof</div>' : '') +
                             '</div>';
                     } else {
-                        html += '<div class="grilla-slot vacio" onclick="crearFranjaDesdeGrilla(' + act.id + ',' + dia + ',' + h + ',' + (h+1) + ')" title="Agregar ' + diasNombre[dia] + ' ' + horaLabel + '">+</div>';
+                        // Celda subdividida
+                        html += renderCeldaSubdividida(grupo, act.id, dia, h);
                     }
                 }
             }
@@ -529,25 +567,97 @@
             document.getElementById('grillaHoraria').innerHTML = html;
         }
 
-        // ─── CREAR FRANJA DESDE GRILLA ───────────────────────────────────────
+        function renderCeldaSubdividida(grupo, actId, dia, baseHora) {
+            var quarters = [0, 0.25, 0.5, 0.75];
+            var inner = '';
+            quarters.forEach(function(q) {
+                var targetHora = baseHora + q;
+                var franja = null;
+                for (var i = 0; i < grupo.length; i++) {
+                    if (Math.abs(grupo[i].hora_inicio - targetHora) < 0.01) { franja = grupo[i]; break; }
+                }
+                var label = ':' + (q === 0 ? '00' : q === 0.25 ? '15' : q === 0.5 ? '30' : '45');
+                if (franja) {
+                    inner += '<div class="quarter-slot ocupado" onclick="abrirGestionFranja(' + franja.id + ',' + actId + ',' + dia + ',' + targetHora + ')">' +
+                        label + '<br>' + (franja.socios_count || 0) + '</div>';
+                } else {
+                    inner += '<div class="quarter-slot vacio" onmousedown="crearFranjaDecimal(event,' + actId + ',' + dia + ',' + targetHora + ')">' + label + '</div>';
+                }
+            });
+            return '<div class="grilla-slot subdividida">' + inner + '</div>';
+        }
 
-        async function crearFranjaDesdeGrilla(actividadId, dia, horaInicio, horaFin) {
+        // ─── DRAG TO PAINT ───────────────────────────────────────────────────
+
+        var isDragging = false;
+        var dragDia = -1;
+        var dragStartHora = -1;
+        var dragEndHora = -1;
+
+        function startDrag(e, dia, hora) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            isDragging = true;
+            dragDia = dia;
+            dragStartHora = hora;
+            dragEndHora = hora;
+        }
+
+        function onDragEnter(dia, hora) {
+            if (!isDragging || dia !== dragDia) return;
+            dragEndHora = hora;
+            var min = Math.min(dragStartHora, dragEndHora);
+            var max = Math.max(dragStartHora, dragEndHora);
+            document.querySelectorAll('.grilla-slot.vacio').forEach(function(cell) {
+                var cellDia = parseInt(cell.dataset.dia);
+                var cellHora = parseInt(cell.dataset.hora);
+                if (cellDia === dragDia && cellHora >= min && cellHora <= max) {
+                    cell.classList.add('seleccionado');
+                } else {
+                    cell.classList.remove('seleccionado');
+                }
+            });
+        }
+
+        document.addEventListener('mouseup', async function() {
+            if (!isDragging) return;
+            isDragging = false;
+            document.querySelectorAll('.seleccionado').forEach(function(c) { c.classList.remove('seleccionado'); });
+
+            if (dragDia < 0 || dragStartHora < 0) return;
+            var min = Math.min(dragStartHora, dragEndHora);
+            var max = Math.max(dragStartHora, dragEndHora);
+            var horas = [];
+            for (var h = min; h <= max; h++) horas.push(h);
+
+            var d = dragDia; var actId = actividadActual;
+            dragDia = -1; dragStartHora = -1; dragEndHora = -1;
+
+            if (!actId) return;
+            if (horas.length === 1) {
+                await crearFranjaRaw(actId, d, horas[0], horas[0] + 1);
+            } else {
+                if (!confirm('Crear ' + horas.length + ' franjas de 1 hora (' + horaToStr(min) + ' a ' + horaToStr(max + 1) + ')?')) return;
+                await Promise.all(horas.map(function(h) { return crearFranjaRaw(actId, d, h, h + 1); }));
+            }
+            await recargarActividadActual();
+        });
+
+        async function crearFranjaRaw(actividadId, dia, horaInicio, horaFin) {
             try {
                 var r = await fetch('/api/actividades/' + actividadId + '/franjas', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ dia_semana: dia, hora_inicio: horaInicio, hora_fin: horaFin })
                 });
-                var d = await r.json();
-                if (d.success) {
-                    await cargarActividades();
-                    var act = allActividades.find(function(a) { return a.id === actividadId; });
-                    if (act) renderGrilla(act);
-                } else {
-                    alert('Error: ' + d.error);
-                }
-            } catch(err) { alert('Error: ' + err.message); }
+                return await r.json();
+            } catch(err) { return { success: false }; }
+        }
+
+        async function crearFranjaDecimal(e, actividadId, dia, horaInicio) {
+            e.preventDefault(); e.stopPropagation();
+            await crearFranjaRaw(actividadId, dia, horaInicio, horaInicio + 0.25);
+            await recargarActividadActual();
         }
 
         // ─── GESTIONAR FRANJA ────────────────────────────────────────────────
@@ -556,7 +666,7 @@
             franjaActual = franjaId;
             actividadActual = actividadId;
             var act = allActividades.find(function(a) { return a.id === actividadId; });
-            var titulo = (act ? act.nombre : '') + ' — ' + diasNombre[dia] + ' ' + (hora < 10 ? '0' + hora : hora) + ':00';
+            var titulo = (act ? act.nombre : '') + ' — ' + diasNombre[dia] + ' ' + horaToStr(hora);
             document.getElementById('gestionTitle').textContent = titulo;
             document.getElementById('gestionsocios').innerHTML = '<div class="empty-message">Cargando...</div>';
             document.getElementById('gestioninstructores').innerHTML = '<div class="empty-message">Cargando...</div>';
@@ -715,6 +825,57 @@
             var d = await r.json();
             if (d.success) { cerrarModal('modalNuevaActividad'); await cargarActividades(); }
             else alert('Error: ' + d.error);
+        }
+
+        // ─── ELIMINAR FRANJA / DIVIDIR EN CUARTOS / ELIMINAR ACTIVIDAD ──────
+
+        async function eliminarFranjaActual() {
+            if (!confirm('Eliminar esta franja? Se perderan los socios e instructores asignados.')) return;
+            try {
+                var r = await fetch('/api/franjas/' + franjaActual, { method: 'DELETE', credentials: 'include' });
+                var d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalGestionarFranja');
+                    await recargarActividadActual();
+                } else alert('Error: ' + d.error);
+            } catch(err) { alert('Error: ' + err.message); }
+        }
+
+        async function dividirFranjaEnCuartos() {
+            try {
+                var r = await fetch('/api/franjas/' + franjaActual, { credentials: 'include' });
+                var d = await r.json();
+                if (!d.success) return;
+                var f = d.franja;
+                var baseHora = Math.floor(f.hora_inicio);
+
+                var aviso = d.socios && d.socios.length > 0
+                    ? 'Esta franja tiene ' + d.socios.length + ' socio(s). Al dividir perderan su asignacion. '
+                    : '';
+                if (!confirm(aviso + 'Dividir en 4 cuartos de 15 min?')) return;
+
+                var quarters = [0, 0.25, 0.5, 0.75];
+                await Promise.all(quarters.map(function(q) {
+                    return fetch('/api/actividades/' + actividadActual + '/franjas', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ dia_semana: f.dia_semana, hora_inicio: baseHora + q, hora_fin: baseHora + q + 0.25 })
+                    });
+                }));
+                await fetch('/api/franjas/' + franjaActual, { method: 'DELETE', credentials: 'include' });
+                cerrarModal('modalGestionarFranja');
+                await recargarActividadActual();
+            } catch(err) { alert('Error: ' + err.message); }
+        }
+
+        async function eliminarActividadActual() {
+            if (!confirm('Eliminar la actividad? Quedara archivada y no aparecera en la lista.')) return;
+            try {
+                var r = await fetch('/api/actividades/' + actividadActual, { method: 'DELETE', credentials: 'include' });
+                var d = await r.json();
+                if (d.success) { volverALista(); await cargarActividades(); }
+                else alert('Error: ' + d.error);
+            } catch(err) { alert('Error: ' + err.message); }
         }
 
         // ─── PLANTILLAS ──────────────────────────────────────────────────────
