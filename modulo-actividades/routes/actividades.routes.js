@@ -4,6 +4,7 @@ const {
   obtenerActividad,
   crearActividad,
   editarActividad,
+  crearFranja,
   obtenerDetallesFranjaHandler,
   agregarSocioFranja,
   quitarSocioFranja,
@@ -27,6 +28,9 @@ router.post('/api/actividades', requireRole(['admin']), (req, res) => crearActiv
 
 // Edit activity
 router.put('/api/actividades/:id', requireRole(['admin']), (req, res) => editarActividad(req, res));
+
+// Crear franja para una actividad
+router.post('/api/actividades/:id/franjas', requireRole(['admin']), (req, res) => crearFranja(req, res));
 
 // Get franja details (socios + instructores)
 router.get('/api/franjas/:franja_id', (req, res) => obtenerDetallesFranjaHandler(req, res));

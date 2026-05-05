@@ -183,6 +183,7 @@ function quitarInstructorFranja(req, res) {
 
 function obtenerSociosDisponibles(req, res) {
   const { franja_id } = req.params;
+  const { q } = req.query;
 
   try {
     const franja = db.prepare('SELECT actividad_id FROM franjas_horarias WHERE id = ?').get(franja_id);
@@ -190,15 +191,42 @@ function obtenerSociosDisponibles(req, res) {
       return res.status(404).json({ success: false, error: 'Franja no encontrada' });
     }
 
+    if (!q || q.trim().length < 2) {
+      return res.json({ success: true, socios: [] });
+    }
+
+    const busqueda = '%' + q.trim() + '%';
     const socios = db.prepare(`
-      SELECT s.id, s.apellido, s.nombre FROM socios s
+      SELECT s.id, s.apellido, s.nombre, s.dni FROM socios s
       WHERE s.id NOT IN (
         SELECT sf.socio_id FROM socio_franjas sf WHERE sf.franja_id = ?
       )
+      AND (s.apellido LIKE ? OR s.nombre LIKE ? OR s.dni LIKE ?)
       ORDER BY s.apellido, s.nombre
-    `).all(franja_id);
+      LIMIT 20
+    `).all(franja_id, busqueda, busqueda, busqueda);
 
     res.json({ success: true, socios });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+function crearFranja(req, res) {
+  const { id } = req.params;
+  const { dia_semana, hora_inicio, hora_fin } = req.body;
+
+  if (dia_semana === undefined || hora_inicio === undefined || hora_fin === undefined) {
+    return res.json({ success: false, error: 'dia_semana, hora_inicio y hora_fin son requeridos' });
+  }
+
+  try {
+    const result = db.prepare(`
+      INSERT INTO franjas_horarias (actividad_id, dia_semana, hora_inicio, hora_fin)
+      VALUES (?, ?, ?, ?)
+    `).run(id, dia_semana, hora_inicio, hora_fin);
+
+    res.json({ success: true, id: result.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -227,6 +255,7 @@ module.exports = {
   obtenerActividad,
   crearActividad,
   editarActividad,
+  crearFranja,
   obtenerDetallesFranjaHandler,
   agregarSocioFranja,
   quitarSocioFranja,

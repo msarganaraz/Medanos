@@ -7,12 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <style>
-        .franjas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 8px;
-            margin: 16px 0;
-        }
         .franja-cell {
             padding: 12px;
             background: var(--neutral-50);
@@ -23,263 +17,308 @@
             text-align: center;
             font-size: var(--text-sm);
         }
-        .franja-cell:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        .franja-hora {
-            font-weight: var(--weight-semibold);
-            margin-bottom: 4px;
-        }
-        .franja-count {
-            font-size: 12px;
-            opacity: 0.8;
-        }
+        .franja-cell:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .franja-hora { font-weight: var(--weight-semibold); margin-bottom: 4px; }
+        .franja-count { font-size: 12px; opacity: 0.8; }
         .activity-section {
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             padding: 20px;
             background: white;
             border-radius: var(--radius-lg);
             border: 1px solid var(--neutral-200);
         }
-        .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .activity-title {
-            font-size: var(--text-xl);
-            font-weight: var(--weight-bold);
-            color: var(--neutral-900);
-        }
-        .activity-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .activity-title { font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--neutral-900); }
+        .activity-actions { display: flex; gap: 8px; }
         .flexible-activity {
-            padding: 16px;
-            background: var(--neutral-50);
+            padding: 16px; background: var(--neutral-50);
             border-radius: var(--radius-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .flexible-count {
-            font-size: var(--text-lg);
-            font-weight: var(--weight-semibold);
-            color: var(--primary);
-        }
-        .personas-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+        .flexible-count { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--primary); }
         .persona-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 8px; background: var(--neutral-50);
+            border-radius: var(--radius-sm); font-size: var(--text-sm); margin-bottom: 4px;
+        }
+        .remove-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; padding: 0 4px; font-size: 16px; }
+        .empty-message { color: var(--neutral-400); font-size: var(--text-sm); padding: 8px 0; }
+        .search-input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-md); font-size: var(--text-sm);
+            box-sizing: border-box; margin-bottom: 8px;
+        }
+        .search-results {
+            max-height: 280px; overflow-y: auto;
+            border: 1px solid var(--neutral-200); border-radius: var(--radius-md);
             background: white;
-            border-radius: var(--radius-sm);
-            font-size: var(--text-sm);
         }
-        .persona-name {
-            color: var(--neutral-900);
+        .search-result-item {
+            padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--neutral-100);
+            font-size: var(--text-sm); transition: background 0.15s;
         }
-        .remove-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-weight: bold;
-            padding: 0 4px;
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: var(--primary); color: white; }
+        .search-hint { font-size: 12px; color: var(--neutral-400); margin-bottom: 8px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: var(--weight-semibold); margin-bottom: 6px; font-size: var(--text-sm); }
+        .form-group select, .form-group input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-md); font-size: var(--text-sm); box-sizing: border-box;
         }
-        .empty-message {
-            color: var(--neutral-400);
-            font-size: var(--text-sm);
-        }
+        .section-divider { border: none; border-top: 1px solid var(--neutral-200); margin: 16px 0; }
+        .section-subtitle { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--neutral-600); margin-bottom: 12px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏊 Actividades</h1>
-            <p>Gestión de socios e instructores por franja horaria</p>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h1>Actividades</h1>
+                <p>Gestion de socios e instructores por franja horaria</p>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModalNuevaActividad()" style="margin-top: 8px;">+ Nueva Actividad</button>
         </div>
-
         <div id="activitiesContainer" style="margin-top: 24px;">
             <div style="text-align: center; padding: 40px; color: #94a3b8;">Cargando actividades...</div>
-        </div>
-    </div>
-
-    <!-- Modal: Ver detalles de franja (readonly) -->
-    <div class="modal" id="modalFranjaDetalle">
-        <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalFranjaDetalle')">✕</button>
-            <div class="modal-content">
-                <div class="modal-header" id="detalleTitle">Franja</div>
-
-                <div style="margin-bottom: 20px;">
-                    <h4 style="margin-bottom: 8px;">Socios (readonly)</h4>
-                    <div id="detallesocios" class="personas-list">
-                        <div class="empty-message">Cargando...</div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 20px; border-top: 1px solid var(--neutral-200); padding-top: 16px;">
-                    <h4 style="margin-bottom: 8px;">Instructores (readonly)</h4>
-                    <div id="detalleinstructores" class="personas-list">
-                        <div class="empty-message">Cargando...</div>
-                    </div>
-                </div>
-
-                <div style="border-top: 1px solid var(--neutral-200); padding-top: 16px; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalFranjaDetalle')">Cerrar</button>
-                </div>
-            </div>
         </div>
     </div>
 
     <!-- Modal: Gestionar franja -->
     <div class="modal" id="modalGestionarFranja">
         <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalGestionarFranja')">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalGestionarFranja')">&#x2715;</button>
             <div class="modal-content">
-                <div class="modal-header">Gestionar Franja</div>
-
-                <div style="margin-bottom: 24px;">
-                    <h4 style="margin-bottom: 12px;">Socios asignados</h4>
-                    <div id="gestionsocios" class="personas-list">
-                        <div class="empty-message">Cargando...</div>
-                    </div>
-                    <div style="margin-top: 12px;">
-                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirModalAgregarSocio()">+ Agregar socio</button>
-                    </div>
+                <div class="modal-header" id="gestionTitle">Gestionar Franja</div>
+                <div style="margin-bottom: 20px;">
+                    <div class="section-subtitle">SOCIOS</div>
+                    <div id="gestionsocios"><div class="empty-message">Cargando...</div></div>
+                    <button class="btn btn-primary btn-sm" onclick="abrirBuscadorSocio()" style="margin-top: 10px;">+ Agregar socio</button>
                 </div>
-
-                <div style="margin-bottom: 24px; border-top: 1px solid var(--neutral-200); padding-top: 16px;">
-                    <h4 style="margin-bottom: 12px;">Instructores asignados</h4>
-                    <div id="gestioninstructores" class="personas-list">
-                        <div class="empty-message">Cargando...</div>
-                    </div>
-                    <div style="margin-top: 12px;">
-                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirModalAgregarInstructor()">+ Agregar instructor</button>
-                    </div>
+                <hr class="section-divider">
+                <div>
+                    <div class="section-subtitle">INSTRUCTORES</div>
+                    <div id="gestioninstructores"><div class="empty-message">Cargando...</div></div>
+                    <button class="btn btn-primary btn-sm" onclick="abrirBuscadorInstructor()" style="margin-top: 10px;">+ Agregar instructor</button>
                 </div>
-
-                <div style="border-top: 1px solid var(--neutral-200); padding-top: 16px; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
+                <div style="text-align: right; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Agregar socio -->
-    <div class="modal" id="modalAgregarSocio">
+    <!-- Modal: Buscar y agregar socio -->
+    <div class="modal" id="modalBuscarSocio">
         <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalAgregarSocio')">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalBuscarSocio')">&#x2715;</button>
             <div class="modal-content">
-                <div class="modal-header">Agregar Socio</div>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Seleccionar socio:</label>
-                    <select id="selectSocio" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md);">
-                        <option value="">Cargando...</option>
-                    </select>
+                <div class="modal-header">Agregar Socio a Franja</div>
+                <p class="search-hint">Buscar por apellido, nombre o DNI (minimo 2 caracteres)</p>
+                <input type="text" id="inputBuscarSocio" class="search-input" placeholder="Ej: Garcia, Juan o 35123456" oninput="buscarSocios(this.value)">
+                <div id="resultadosSocios" class="search-results">
+                    <div style="padding: 12px; color: var(--neutral-400); font-size: var(--text-sm);">Escriba para buscar...</div>
                 </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button class="btn btn-secondary" onclick="cerrarModal('modalAgregarSocio')">Cancelar</button>
-                    <button class="btn btn-primary" onclick="confirmarAgregarSocio()">Agregar</button>
+                <div style="text-align: right; margin-top: 16px;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalBuscarSocio')">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Agregar instructor -->
-    <div class="modal" id="modalAgregarInstructor">
+    <!-- Modal: Buscar y agregar instructor -->
+    <div class="modal" id="modalBuscarInstructor">
         <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalAgregarInstructor')">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalBuscarInstructor')">&#x2715;</button>
             <div class="modal-content">
-                <div class="modal-header">Agregar Instructor</div>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Seleccionar instructor:</label>
-                    <select id="selectInstructor" style="width: 100%; padding: 10px; border: 1px solid var(--neutral-200); border-radius: var(--radius-md);">
-                        <option value="">Cargando...</option>
+                <div class="modal-header">Agregar Instructor a Franja</div>
+                <div id="listaInstructoresDisponibles" class="search-results" style="max-height: 320px;">
+                    <div style="padding: 12px; color: var(--neutral-400);">Cargando...</div>
+                </div>
+                <div style="text-align: right; margin-top: 16px;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalBuscarInstructor')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva franja horaria -->
+    <div class="modal" id="modalNuevaFranja">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalNuevaFranja')">&#x2715;</button>
+            <div class="modal-content">
+                <div class="modal-header">Agregar Franja Horaria</div>
+                <div class="form-group">
+                    <label>Dia de la semana</label>
+                    <select id="nuevaFranjaDia">
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miercoles</option>
+                        <option value="3">Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5">Sabado</option>
+                        <option value="6">Domingo</option>
                     </select>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Hora inicio</label>
+                        <select id="nuevaFranjaInicio">
+                            <option value="6">06:00</option>
+                            <option value="7">07:00</option>
+                            <option value="8">08:00</option>
+                            <option value="9">09:00</option>
+                            <option value="10">10:00</option>
+                            <option value="11">11:00</option>
+                            <option value="12">12:00</option>
+                            <option value="13">13:00</option>
+                            <option value="14">14:00</option>
+                            <option value="15">15:00</option>
+                            <option value="16">16:00</option>
+                            <option value="17">17:00</option>
+                            <option value="18" selected>18:00</option>
+                            <option value="19">19:00</option>
+                            <option value="20">20:00</option>
+                            <option value="21">21:00</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora fin</label>
+                        <select id="nuevaFranjaFin">
+                            <option value="7">07:00</option>
+                            <option value="8">08:00</option>
+                            <option value="9">09:00</option>
+                            <option value="10">10:00</option>
+                            <option value="11">11:00</option>
+                            <option value="12">12:00</option>
+                            <option value="13">13:00</option>
+                            <option value="14">14:00</option>
+                            <option value="15">15:00</option>
+                            <option value="16">16:00</option>
+                            <option value="17">17:00</option>
+                            <option value="18">18:00</option>
+                            <option value="19" selected>19:00</option>
+                            <option value="20">20:00</option>
+                            <option value="21">21:00</option>
+                            <option value="22">22:00</option>
+                        </select>
+                    </div>
+                </div>
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button class="btn btn-secondary" onclick="cerrarModal('modalAgregarInstructor')">Cancelar</button>
-                    <button class="btn btn-primary" onclick="confirmarAgregarInstructor()">Agregar</button>
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalNuevaFranja')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarNuevaFranja()">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva actividad -->
+    <div class="modal" id="modalNuevaActividad">
+        <div style="position: relative;">
+            <button class="modal-close" onclick="cerrarModal('modalNuevaActividad')">&#x2715;</button>
+            <div class="modal-content">
+                <div class="modal-header">Nueva Actividad</div>
+                <div class="form-group">
+                    <label>Nombre *</label>
+                    <input type="text" id="nuevaActNombre" placeholder="Ej: Natacion, Tenis...">
+                </div>
+                <div class="form-group">
+                    <label>Descripcion</label>
+                    <input type="text" id="nuevaActDescripcion" placeholder="Descripcion breve">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio base ($)</label>
+                        <input type="number" id="nuevaActPrecio" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 4px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                            <input type="checkbox" id="nuevaActFlexible"> Horario flexible (sin franjas)
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalNuevaActividad')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarNuevaActividad()">Crear Actividad</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let allActividades = [];
-        let franjaActual = null;
-        let actividadActual = null;
+        var allActividades = [];
+        var franjaActual = null;
+        var actividadActual = null;
+        var buscarTimeout = null;
+        var diasNombre = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
 
-        const diasNombre = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ─── CARGAR DASHBOARD ───────────────────────────────────────────────
 
         async function cargarActividades() {
             try {
-                const r = await fetch('/api/actividades', { credentials: 'include' });
-                const d = await r.json();
+                var r = await fetch('/api/actividades', { credentials: 'include' });
+                var d = await r.json();
                 if (d.success) {
                     allActividades = d.actividades || [];
                     renderActividades();
                 } else {
-                    const container = document.getElementById('activitiesContainer');
-                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Error: ' + (d.error || 'Error al cargar actividades') + '</div>';
+                    document.getElementById('activitiesContainer').innerHTML =
+                        '<div style="text-align:center;padding:40px;color:red;">Error: ' + (d.error || 'Error al cargar') + '</div>';
                 }
             } catch (err) {
-                console.error(err);
-                const container = document.getElementById('activitiesContainer');
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Error: ' + err.message + '</div>';
+                document.getElementById('activitiesContainer').innerHTML =
+                    '<div style="text-align:center;padding:40px;color:red;">Error de conexion</div>';
             }
         }
 
         function renderActividades() {
-            const container = document.getElementById('activitiesContainer');
+            var container = document.getElementById('activitiesContainer');
             if (allActividades.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">No hay actividades</div>';
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No hay actividades cargadas</div>';
                 return;
             }
-
-            let html = '';
-            allActividades.forEach(act => {
+            var html = '';
+            allActividades.forEach(function(act) {
                 if (act.tiene_horarios_flexibles) {
                     html += '<div class="activity-section">' +
                         '<div class="activity-header">' +
                             '<div class="activity-title">' + act.nombre + '</div>' +
                             '<div class="activity-actions">' +
-                                '<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionFlexible(' + act.id + ')">&#10133; Gestionar</button>' +
+                                '<button class="btn btn-primary btn-sm" onclick="abrirGestionFlexible(' + act.id + ')">Gestionar</button>' +
                             '</div>' +
                         '</div>' +
                         '<div class="flexible-activity">' +
-                            '<span>Acceso libre (sin franjas definidas)</span>' +
-                            '<span class="flexible-count">' + (act.socios_count || 0) + ' socios</span>' +
+                            '<span>Acceso libre (sin franjas fijas)</span>' +
+                            '<span class="flexible-count">' + (act.socios_count || 0) + ' socios inscriptos</span>' +
                         '</div>' +
                         '</div>';
                 } else {
-                    var franjasHtml = (act.franjas || []).map(function(f) {
-                        var hora = String(f.hora_inicio).padStart(2, '0') + ':00-' + String(f.hora_fin).padStart(2, '0') + ':00';
-                        return '<div class="franja-cell" onclick="abrirDetallesFranja(' + f.id + ')">' +
-                            '<div class="franja-hora">' + diasNombre[f.dia_semana] + '</div>' +
-                            '<div class="franja-hora">' + hora + '</div>' +
-                            '<div class="franja-count">' + (f.socios_count || 0) + ' socios | ' + (f.instructores_count || 0) + ' profes</div>' +
-                            '</div>';
-                    }).join('');
+                    var franjasHtml = '';
+                    if (act.franjas && act.franjas.length > 0) {
+                        act.franjas.forEach(function(f) {
+                            var hora = pad(f.hora_inicio) + ':00-' + pad(f.hora_fin) + ':00';
+                            franjasHtml += '<div class="franja-cell" onclick="abrirGestionFranja(' + f.id + ', ' + act.id + ')">' +
+                                '<div class="franja-hora">' + diasNombre[f.dia_semana] + '</div>' +
+                                '<div class="franja-hora">' + hora + '</div>' +
+                                '<div class="franja-count">' + (f.socios_count || 0) + ' socios | ' + (f.instructores_count || 0) + ' profes</div>' +
+                                '</div>';
+                        });
+                    } else {
+                        franjasHtml = '<div class="empty-message">Sin franjas horarias. Agregar una usando el boton.</div>';
+                    }
                     html += '<div class="activity-section">' +
                         '<div class="activity-header">' +
                             '<div class="activity-title">' + act.nombre + '</div>' +
                             '<div class="activity-actions">' +
-                                '<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionActividad(' + act.id + ')">&#9881;&#65039; Gestionar</button>' +
+                                '<button class="btn btn-secondary btn-sm" onclick="abrirModalAgregarFranja(' + act.id + ')">+ Franja</button>' +
                             '</div>' +
                         '</div>' +
-                        '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">' +
+                        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">' +
                             franjasHtml +
                         '</div>' +
                         '</div>';
@@ -288,96 +327,116 @@
             container.innerHTML = html;
         }
 
-        async function abrirDetallesFranja(franjaId) {
-            try {
-                const r = await fetch('/api/franjas/' + franjaId, { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    const f = d.franja;
-                    document.getElementById('detalleTitle').textContent = f.actividad_nombre + ' - ' + diasNombre[f.dia_semana] + ' ' + f.hora_inicio + ':00-' + f.hora_fin + ':00';
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-                    const sociosHtml = (d.socios || []).length === 0
-                        ? '<div class="empty-message">Sin socios asignados</div>'
-                        : d.socios.map(s => '<div class="persona-item"><span class="persona-name">' + s.apellido + ', ' + s.nombre + '</span></div>').join('');
-                    document.getElementById('detallesocios').innerHTML = sociosHtml;
+        // ─── GESTIONAR FRANJA ────────────────────────────────────────────────
 
-                    const instructoresHtml = (d.instructores || []).length === 0
-                        ? '<div class="empty-message">Sin instructores asignados</div>'
-                        : d.instructores.map(i => '<div class="persona-item"><span class="persona-name">' + i.apellido + ', ' + i.nombre + '</span></div>').join('');
-                    document.getElementById('detalleinstructores').innerHTML = instructoresHtml;
-
-                    document.getElementById('modalFranjaDetalle').classList.add('active');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        }
-
-        async function abrirGestionActividad(actividadId) {
+        async function abrirGestionFranja(franjaId, actividadId) {
+            franjaActual = franjaId;
             actividadActual = actividadId;
-            try {
-                const r = await fetch('/api/actividades/' + actividadId, { credentials: 'include' });
-                const d = await r.json();
-                if (d.success && d.franjas && d.franjas.length > 0) {
-                    franjaActual = d.franjas[0].id;
-                    await cargarDetallesFranja();
-                    document.getElementById('modalGestionarFranja').classList.add('active');
-                }
-            } catch (err) {
-                console.error(err);
+            var act = allActividades.find(function(a) { return a.id === actividadId; });
+            var franja = act && act.franjas ? act.franjas.find(function(f) { return f.id === franjaId; }) : null;
+            var titulo = 'Gestionar Franja';
+            if (act && franja) {
+                titulo = act.nombre + ' — ' + diasNombre[franja.dia_semana] + ' ' + pad(franja.hora_inicio) + ':00-' + pad(franja.hora_fin) + ':00';
             }
+            document.getElementById('gestionTitle').textContent = titulo;
+            document.getElementById('gestionsocios').innerHTML = '<div class="empty-message">Cargando...</div>';
+            document.getElementById('gestioninstructores').innerHTML = '<div class="empty-message">Cargando...</div>';
+            document.getElementById('modalGestionarFranja').classList.add('active');
+            await cargarDetallesFranja();
         }
 
         async function cargarDetallesFranja() {
             try {
-                const r = await fetch('/api/franjas/' + franjaActual, { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    const sociosHtml = (d.socios || []).length === 0
-                        ? '<div class="empty-message">Sin socios asignados</div>'
-                        : d.socios.map(s => '<div class="persona-item"><span class="persona-name">' + s.apellido + ', ' + s.nombre + '</span><button class="remove-btn" onclick="quitarSocio(' + franjaActual + ', ' + s.id + ')">✕</button></div>').join('');
-                    document.getElementById('gestionsocios').innerHTML = sociosHtml;
+                var r = await fetch('/api/franjas/' + franjaActual, { credentials: 'include' });
+                var d = await r.json();
+                if (!d.success) return;
 
-                    const instructoresHtml = (d.instructores || []).length === 0
-                        ? '<div class="empty-message">Sin instructores asignados</div>'
-                        : d.instructores.map(i => '<div class="persona-item"><span class="persona-name">' + i.apellido + ', ' + i.nombre + '</span><button class="remove-btn" onclick="quitarInstructor(' + franjaActual + ', ' + i.id + ')">✕</button></div>').join('');
-                    document.getElementById('gestioninstructores').innerHTML = instructoresHtml;
+                var sociosHtml = '';
+                if (!d.socios || d.socios.length === 0) {
+                    sociosHtml = '<div class="empty-message">Sin socios asignados</div>';
+                } else {
+                    d.socios.forEach(function(s) {
+                        sociosHtml += '<div class="persona-item">' +
+                            '<span>' + s.apellido + ', ' + s.nombre + '</span>' +
+                            '<button class="remove-btn" onclick="quitarSocio(' + franjaActual + ',' + s.id + ')">&#x2715;</button>' +
+                            '</div>';
+                    });
                 }
+                document.getElementById('gestionsocios').innerHTML = sociosHtml;
+
+                var instructoresHtml = '';
+                if (!d.instructores || d.instructores.length === 0) {
+                    instructoresHtml = '<div class="empty-message">Sin instructores asignados</div>';
+                } else {
+                    d.instructores.forEach(function(i) {
+                        instructoresHtml += '<div class="persona-item">' +
+                            '<span>' + i.apellido + ', ' + i.nombre + '</span>' +
+                            '<button class="remove-btn" onclick="quitarInstructor(' + franjaActual + ',' + i.id + ')">&#x2715;</button>' +
+                            '</div>';
+                    });
+                }
+                document.getElementById('gestioninstructores').innerHTML = instructoresHtml;
             } catch (err) {
                 console.error(err);
             }
         }
 
-        async function abrirModalAgregarSocio() {
-            try {
-                const r = await fetch('/api/franjas/' + franjaActual + '/socios/disponibles', { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    const options = d.socios.map(s => '<option value="' + s.id + '">' + s.apellido + ', ' + s.nombre + '</option>').join('');
-                    document.getElementById('selectSocio').innerHTML = '<option value="">Seleccionar...</option>' + options;
-                    document.getElementById('modalAgregarSocio').classList.add('active');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+        // ─── BUSCAR Y AGREGAR SOCIO ──────────────────────────────────────────
+
+        function abrirBuscadorSocio() {
+            document.getElementById('inputBuscarSocio').value = '';
+            document.getElementById('resultadosSocios').innerHTML =
+                '<div style="padding:12px;color:var(--neutral-400);font-size:var(--text-sm);">Escriba para buscar...</div>';
+            document.getElementById('modalBuscarSocio').classList.add('active');
+            setTimeout(function() { document.getElementById('inputBuscarSocio').focus(); }, 100);
         }
 
-        async function confirmarAgregarSocio() {
-            const socioId = document.getElementById('selectSocio').value;
-            if (!socioId) {
-                alert('Selecciona un socio');
+        function buscarSocios(texto) {
+            clearTimeout(buscarTimeout);
+            if (texto.length < 2) {
+                document.getElementById('resultadosSocios').innerHTML =
+                    '<div style="padding:12px;color:var(--neutral-400);font-size:var(--text-sm);">Escriba al menos 2 caracteres...</div>';
                 return;
             }
+            document.getElementById('resultadosSocios').innerHTML =
+                '<div style="padding:12px;color:var(--neutral-400);">Buscando...</div>';
+            buscarTimeout = setTimeout(async function() {
+                try {
+                    var r = await fetch('/api/franjas/' + franjaActual + '/socios/disponibles?q=' + encodeURIComponent(texto), { credentials: 'include' });
+                    var d = await r.json();
+                    if (!d.success) return;
+                    if (d.socios.length === 0) {
+                        document.getElementById('resultadosSocios').innerHTML =
+                            '<div style="padding:12px;color:var(--neutral-400);">No se encontraron socios disponibles</div>';
+                        return;
+                    }
+                    var html = '';
+                    d.socios.forEach(function(s) {
+                        html += '<div class="search-result-item" onclick="seleccionarSocio(' + s.id + ')">' +
+                            '<strong>' + s.apellido + ', ' + s.nombre + '</strong>' +
+                            '<span style="margin-left:8px;opacity:0.6;font-size:12px;">DNI: ' + (s.dni || '-') + '</span>' +
+                            '</div>';
+                    });
+                    document.getElementById('resultadosSocios').innerHTML = html;
+                } catch (err) {
+                    console.error(err);
+                }
+            }, 300);
+        }
+
+        async function seleccionarSocio(socioId) {
             try {
-                const r = await fetch('/api/franjas/' + franjaActual + '/socios', {
+                var r = await fetch('/api/franjas/' + franjaActual + '/socios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ socio_id: parseInt(socioId) })
+                    body: JSON.stringify({ socio_id: socioId })
                 });
-                const d = await r.json();
+                var d = await r.json();
                 if (d.success) {
-                    cerrarModal('modalAgregarSocio');
+                    cerrarModal('modalBuscarSocio');
                     await cargarDetallesFranja();
                     await cargarActividades();
                 } else {
@@ -389,90 +448,134 @@
         }
 
         async function quitarSocio(franjaId, socioId) {
-            if (!confirm('¿Quitar socio de esta franja?')) return;
+            if (!confirm('Quitar este socio de la franja?')) return;
             try {
-                const r = await fetch('/api/franjas/' + franjaId + '/socios/' + socioId, {
-                    method: 'DELETE',
-                    credentials: 'include'
+                var r = await fetch('/api/franjas/' + franjaId + '/socios/' + socioId, { method: 'DELETE', credentials: 'include' });
+                var d = await r.json();
+                if (d.success) { await cargarDetallesFranja(); await cargarActividades(); }
+                else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        // ─── BUSCAR Y AGREGAR INSTRUCTOR ─────────────────────────────────────
+
+        async function abrirBuscadorInstructor() {
+            document.getElementById('listaInstructoresDisponibles').innerHTML =
+                '<div style="padding:12px;color:var(--neutral-400);">Cargando...</div>';
+            document.getElementById('modalBuscarInstructor').classList.add('active');
+            try {
+                var r = await fetch('/api/franjas/' + franjaActual + '/instructores/disponibles', { credentials: 'include' });
+                var d = await r.json();
+                if (!d.success) return;
+                if (d.instructores.length === 0) {
+                    document.getElementById('listaInstructoresDisponibles').innerHTML =
+                        '<div style="padding:12px;color:var(--neutral-400);">Todos los instructores ya estan asignados</div>';
+                    return;
+                }
+                var html = '';
+                d.instructores.forEach(function(i) {
+                    html += '<div class="search-result-item" onclick="seleccionarInstructor(' + i.id + ')">' +
+                        i.apellido + ', ' + i.nombre + '</div>';
                 });
-                const d = await r.json();
-                if (d.success) {
-                    await cargarDetallesFranja();
-                    await cargarActividades();
-                } else {
-                    alert('Error: ' + d.error);
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+                document.getElementById('listaInstructoresDisponibles').innerHTML = html;
+            } catch (err) { console.error(err); }
         }
 
-        async function abrirModalAgregarInstructor() {
+        async function seleccionarInstructor(instructorId) {
             try {
-                const r = await fetch('/api/franjas/' + franjaActual + '/instructores/disponibles', { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    const options = d.instructores.map(i => '<option value="' + i.id + '">' + i.apellido + ', ' + i.nombre + '</option>').join('');
-                    document.getElementById('selectInstructor').innerHTML = '<option value="">Seleccionar...</option>' + options;
-                    document.getElementById('modalAgregarInstructor').classList.add('active');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        }
-
-        async function confirmarAgregarInstructor() {
-            const instructorId = document.getElementById('selectInstructor').value;
-            if (!instructorId) {
-                alert('Selecciona un instructor');
-                return;
-            }
-            try {
-                const r = await fetch('/api/franjas/' + franjaActual + '/instructores', {
+                var r = await fetch('/api/franjas/' + franjaActual + '/instructores', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ instructor_id: parseInt(instructorId) })
+                    body: JSON.stringify({ instructor_id: instructorId })
                 });
-                const d = await r.json();
+                var d = await r.json();
                 if (d.success) {
-                    cerrarModal('modalAgregarInstructor');
+                    cerrarModal('modalBuscarInstructor');
                     await cargarDetallesFranja();
                     await cargarActividades();
-                } else {
-                    alert('Error: ' + d.error);
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+                } else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
         }
 
         async function quitarInstructor(franjaId, instructorId) {
-            if (!confirm('¿Quitar instructor de esta franja?')) return;
+            if (!confirm('Quitar este instructor de la franja?')) return;
             try {
-                const r = await fetch('/api/franjas/' + franjaId + '/instructores/' + instructorId, {
-                    method: 'DELETE',
-                    credentials: 'include'
-                });
-                const d = await r.json();
-                if (d.success) {
-                    await cargarDetallesFranja();
-                    await cargarActividades();
-                } else {
-                    alert('Error: ' + d.error);
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+                var r = await fetch('/api/franjas/' + franjaId + '/instructores/' + instructorId, { method: 'DELETE', credentials: 'include' });
+                var d = await r.json();
+                if (d.success) { await cargarDetallesFranja(); await cargarActividades(); }
+                else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
         }
+
+        // ─── NUEVA FRANJA HORARIA ────────────────────────────────────────────
+
+        function abrirModalAgregarFranja(actividadId) {
+            actividadActual = actividadId;
+            document.getElementById('modalNuevaFranja').classList.add('active');
+        }
+
+        async function confirmarNuevaFranja() {
+            var dia = parseInt(document.getElementById('nuevaFranjaDia').value);
+            var inicio = parseInt(document.getElementById('nuevaFranjaInicio').value);
+            var fin = parseInt(document.getElementById('nuevaFranjaFin').value);
+            if (fin <= inicio) {
+                alert('La hora fin debe ser mayor a la hora inicio');
+                return;
+            }
+            try {
+                var r = await fetch('/api/actividades/' + actividadActual + '/franjas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ dia_semana: dia, hora_inicio: inicio, hora_fin: fin })
+                });
+                var d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalNuevaFranja');
+                    await cargarActividades();
+                } else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        // ─── NUEVA ACTIVIDAD ─────────────────────────────────────────────────
+
+        function abrirModalNuevaActividad() {
+            document.getElementById('nuevaActNombre').value = '';
+            document.getElementById('nuevaActDescripcion').value = '';
+            document.getElementById('nuevaActPrecio').value = '';
+            document.getElementById('nuevaActFlexible').checked = false;
+            document.getElementById('modalNuevaActividad').classList.add('active');
+        }
+
+        async function confirmarNuevaActividad() {
+            var nombre = document.getElementById('nuevaActNombre').value.trim();
+            if (!nombre) { alert('El nombre es requerido'); return; }
+            var descripcion = document.getElementById('nuevaActDescripcion').value.trim();
+            var precio = parseFloat(document.getElementById('nuevaActPrecio').value) || 0;
+            var flexible = document.getElementById('nuevaActFlexible').checked ? 1 : 0;
+            try {
+                var r = await fetch('/api/actividades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nombre: nombre, descripcion: descripcion, precio_base: precio, tiene_horarios_flexibles: flexible })
+                });
+                var d = await r.json();
+                if (d.success) {
+                    cerrarModal('modalNuevaActividad');
+                    await cargarActividades();
+                } else alert('Error: ' + d.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        }
+
+        // ─── ACTIVIDADES FLEXIBLES ───────────────────────────────────────────
 
         function abrirGestionFlexible(actividadId) {
-            alert('Gestión de actividades flexibles próximamente');
+            alert('Gestion de actividades flexibles proxima actualizacion');
         }
 
-        function cerrarModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
+        // ─── INIT ────────────────────────────────────────────────────────────
 
         cargarActividades();
     </script>
