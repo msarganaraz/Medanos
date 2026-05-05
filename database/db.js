@@ -78,15 +78,25 @@ async function initDB() {
 
   // Crear franjas para actividades que no las tengan (migración de datos)
   try {
-    const actividades = db.prepare('SELECT id, dias_horario FROM actividades WHERE activo = 1').all();
     const diasMap = { 'Lun': 0, 'Mar': 1, 'Mié': 2, 'Jue': 3, 'Vie': 4, 'Sab': 5, 'Dom': 6 };
 
-    actividades.forEach(act => {
+    // Usar exec nativo de sql.js para leer actividades
+    const actResult = db.exec('SELECT id, dias_horario FROM actividades WHERE activo = 1');
+    if (!actResult.length) return;
+
+    const cols = actResult[0].columns;
+    const rows = actResult[0].values;
+
+    rows.forEach(row => {
+      const act = {};
+      cols.forEach((col, i) => act[col] = row[i]);
+
       if (!act.dias_horario) return;
 
-      // Check if this activity has franjas
-      const franjas = db.prepare('SELECT COUNT(*) as count FROM franjas_horarias WHERE actividad_id = ?').get(act.id);
-      if (franjas.count > 0) return; // Ya tiene franjas
+      // Verificar si ya tiene franjas
+      const franjasResult = db.exec('SELECT COUNT(*) as count FROM franjas_horarias WHERE actividad_id = ' + act.id);
+      const count = franjasResult[0]?.values[0][0] || 0;
+      if (count > 0) return;
 
       // Parse dias_horario y crear franjas
       const partes = act.dias_horario.split(',')[0].trim().split(' ');
@@ -94,16 +104,17 @@ async function initDB() {
       const horaInicio = parseInt(partes[1]);
       const horaFin = parseInt(partes[3]);
 
-      const dias = diasStr.split('-').map(d => diasMap[d] || 0);
-      dias.forEach(dia => {
-        db.prepare(`
-          INSERT INTO franjas_horarias (actividad_id, dia_semana, hora_inicio, hora_fin)
-          VALUES (?, ?, ?, ?)
-        `).run(act.id, dia, horaInicio, horaFin);
+      diasStr.split('-').forEach(d => {
+        const dia = diasMap[d];
+        if (dia === undefined) return;
+        db.exec('INSERT INTO franjas_horarias (actividad_id, dia_semana, hora_inicio, hora_fin) VALUES (' + act.id + ',' + dia + ',' + horaInicio + ',' + horaFin + ')');
       });
     });
+
+    saveDB();
+    console.log('✓ Franjas horarias generadas para actividades existentes');
   } catch (err) {
-    // Silently ignore if franjas already exist
+    console.error('⚠ Error creando franjas:', err.message);
   }
 }
 
