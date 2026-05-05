@@ -188,15 +188,15 @@
 
         <!-- ── VISTA LISTA ── -->
         <div id="vistaLista">
-            <div style="margin-bottom:8px;">
-                <a href="/dashboard" style="color:var(--neutral-500);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">&#8592; Volver al dashboard</a>
-            </div>
             <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
                 <div>
+                    <a href="/dashboard" style="color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.75)'">
+                        &#8592; Dashboard
+                    </a>
                     <h1>Actividades</h1>
                     <p>Seleccioná una actividad para gestionar sus horarios</p>
                 </div>
-                <button class="btn btn-primary" onclick="abrirModalNuevaActividad()" style="margin-top:8px;">+ Nueva Actividad</button>
+                <button class="btn" onclick="abrirModalNuevaActividad()" style="margin-top:8px;background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.4);backdrop-filter:blur(4px);">+ Nueva Actividad</button>
             </div>
             <div class="busqueda-wrap">
                 <input type="text" id="busquedaActividades" class="busqueda-act" placeholder="Buscar por nombre o descripción..." oninput="filtrarActividades()">
