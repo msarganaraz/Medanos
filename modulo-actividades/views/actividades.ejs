@@ -7,30 +7,60 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <style>
-        /* ── LISTA DE ACTIVIDADES ── */
-        .act-card {
-            background: white;
-            border: 1px solid var(--neutral-200);
-            border-radius: var(--radius-lg);
-            padding: 20px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: box-shadow 0.2s, border-color 0.2s;
+        /* ── BÚSQUEDA Y FILTROS ── */
+        .busqueda-wrap { position: relative; margin-bottom: 14px; }
+        .busqueda-wrap::before { content: '🔍'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }
+        .busqueda-act {
+            width: 100%; padding: 10px 16px 10px 42px; border: 1.5px solid var(--neutral-200);
+            border-radius: 24px; font-size: var(--text-sm); box-sizing: border-box; background: white;
+            transition: border-color 0.2s;
         }
-        .act-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--primary); }
-        .act-card-name { font-size: var(--text-xl); font-weight: var(--weight-bold); color: var(--neutral-900); }
-        .act-card-meta { font-size: var(--text-sm); color: var(--neutral-500); margin-top: 4px; }
-        .act-card-badge {
-            background: var(--primary-light, #e8f5e9);
-            color: var(--primary);
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
+        .busqueda-act:focus { outline: none; border-color: var(--primary); }
+        .filtros-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+        .filtro-pill {
+            padding: 6px 18px; border-radius: 24px; border: 1.5px solid var(--neutral-200);
+            background: white; font-size: 13px; cursor: pointer; font-weight: 600;
+            color: var(--neutral-600); transition: all 0.15s;
         }
+        .filtro-pill.activo { background: var(--primary); color: white; border-color: var(--primary); }
+        .filtro-pill:hover:not(.activo) { border-color: var(--primary); color: var(--primary); }
+
+        /* ── GRID DE TARJETAS ── */
+        .act-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 16px;
+        }
+        .act-card-v2 {
+            background: white; border: 1.5px solid var(--neutral-200); border-radius: var(--radius-lg);
+            padding: 20px; cursor: pointer; display: flex; flex-direction: column;
+            transition: box-shadow 0.2s, border-color 0.2s, transform 0.1s;
+        }
+        .act-card-v2:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); border-color: var(--primary); transform: translateY(-2px); }
+        .act-icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 14px; }
+        .act-card-v2-nombre { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--neutral-900); margin-bottom: 4px; }
+        .act-card-v2-desc { font-size: 13px; color: var(--neutral-500); margin-bottom: 10px; flex: 1; min-height: 18px; }
+        .act-card-v2-instructores { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; min-height: 22px; }
+        .act-card-v2-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 12px; border-top: 1px solid var(--neutral-100);
+            font-size: 12px; color: var(--neutral-500);
+        }
+        .act-gestionar { color: var(--primary); font-weight: 700; font-size: 13px; }
+
+        /* ── PLANTILLAS RÁPIDAS ── */
+        .template-bar {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 16px; padding: 10px 14px;
+            background: var(--neutral-50); border-radius: var(--radius-md); border: 1px solid var(--neutral-200);
+        }
+        .template-bar-label { font-size: 11px; font-weight: 700; color: var(--neutral-500); letter-spacing: 0.6px; white-space: nowrap; text-transform: uppercase; }
+        .template-btn {
+            padding: 5px 14px; border: 1.5px solid var(--neutral-300); border-radius: 20px;
+            background: white; font-size: 12px; font-weight: 600; cursor: pointer;
+            color: var(--neutral-700); transition: all 0.15s;
+        }
+        .template-btn:hover { border-color: var(--primary); color: var(--primary); background: #e8f5e9; }
 
         /* ── VISTA DE DETALLE ── */
         .detalle-header {
@@ -138,16 +168,22 @@
 
         <!-- ── VISTA LISTA ── -->
         <div id="vistaLista">
-            <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
                 <div>
                     <h1>Actividades</h1>
-                    <p>Selecciona una actividad para gestionar sus horarios</p>
+                    <p>Seleccioná una actividad para gestionar sus horarios</p>
                 </div>
                 <button class="btn btn-primary" onclick="abrirModalNuevaActividad()" style="margin-top:8px;">+ Nueva Actividad</button>
             </div>
-            <div id="listaActividades" style="margin-top:24px;">
-                <div style="text-align:center;padding:40px;color:#94a3b8;">Cargando...</div>
+            <div class="busqueda-wrap">
+                <input type="text" id="busquedaActividades" class="busqueda-act" placeholder="Buscar por nombre o descripción..." oninput="filtrarActividades()">
             </div>
+            <div class="filtros-bar">
+                <button class="filtro-pill activo" onclick="setFiltro('todos', this)">Todas</button>
+                <button class="filtro-pill" onclick="setFiltro('franjas', this)">Con horarios</button>
+                <button class="filtro-pill" onclick="setFiltro('flexibles', this)">Flexibles</button>
+            </div>
+            <div id="listaActividades" class="act-cards-grid"></div>
         </div>
 
         <!-- ── VISTA DETALLE ── -->
@@ -166,6 +202,14 @@
                         <span><span style="display:inline-block;width:12px;height:12px;background:var(--primary);border-radius:3px;margin-right:4px;"></span>Con socios</span>
                         <span><span style="display:inline-block;width:12px;height:12px;background:var(--neutral-100);border:1px dashed #ccc;border-radius:3px;margin-right:4px;"></span>Disponible</span>
                     </div>
+                </div>
+                <div class="template-bar">
+                    <span class="template-bar-label">Plantillas:</span>
+                    <button class="template-btn" onclick="aplicarPlantilla(0)">Lun-Mie-Vie</button>
+                    <button class="template-btn" onclick="aplicarPlantilla(1)">Mar-Jue</button>
+                    <button class="template-btn" onclick="aplicarPlantilla(2)">Lun a Vie</button>
+                    <button class="template-btn" onclick="aplicarPlantilla(3)">Fin de semana</button>
+                    <button class="template-btn" onclick="aplicarPlantilla(4)">Todos los dias</button>
                 </div>
                 <div class="grilla-wrapper">
                     <div class="grilla" id="grillaHoraria"></div>
@@ -266,15 +310,78 @@
         </div>
     </div>
 
+    <!-- Modal: Plantilla horaria -->
+    <div class="modal" id="modalPlantilla">
+        <div style="position:relative;">
+            <button class="modal-close" onclick="cerrarModal('modalPlantilla')">&#x2715;</button>
+            <div class="modal-content">
+                <div class="modal-header" id="plantillaTitulo">Plantilla</div>
+                <p style="color:var(--neutral-500);font-size:var(--text-sm);margin-bottom:20px;">
+                    Dias: <strong id="plantillaDiasTexto"></strong>
+                </p>
+                <input type="hidden" id="plantillaIdxInput">
+                <div class="form-group">
+                    <label>Hora de inicio</label>
+                    <select id="plantillaHoraInicio"></select>
+                </div>
+                <div class="form-group">
+                    <label>Duracion</label>
+                    <select id="plantillaDuracion">
+                        <option value="1">1 hora</option>
+                        <option value="2">2 horas</option>
+                        <option value="3">3 horas</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="cerrarModal('modalPlantilla')">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarPlantilla()">Aplicar plantilla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         var allActividades = [];
         var actividadActual = null;
         var franjaActual = null;
         var buscarTimeout = null;
+        var filtroActual = 'todos';
         var diasNombre = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
         var diasCorto = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
         var HORA_INICIO = 7;
         var HORA_FIN = 21;
+
+        var iconMap = [
+            ['natacion','🏊'],['natación','🏊'],['pileta','🏊'],
+            ['futbol','⚽'],['fútbol','⚽'],['football','⚽'],
+            ['tenis','🎾'],['padel','🎾'],['pádel','🎾'],
+            ['yoga','🧘'],['meditacion','🧘'],
+            ['musculacion','💪'],['musculación','💪'],['muscu','💪'],['pesas','💪'],['gym','💪'],['fitness','💪'],
+            ['pilates','🤸'],['gimnasia','🤸'],['aerobics','🤸'],['zumba','🤸'],
+            ['hockey','🏑'],['basquet','🏀'],['básquet','🏀'],['basket','🏀'],
+            ['voley','🏐'],['vóley','🏐'],['voleibol','🏐'],
+            ['boxeo','🥊'],['karate','🥋'],['artes marciales','🥋'],['judo','🥋'],
+            ['ciclismo','🚴'],['bici','🚴'],['running','🏃'],['atletismo','🏃'],
+            ['baile','💃'],['danza','💃'],['ajedrez','♟️'],['esgrima','🤺']
+        ];
+        var iconColors = ['#e8f5e9','#e3f2fd','#fce4ec','#fff3e0','#f3e5f5','#e0f2f1','#fefce8'];
+
+        var PLANTILLAS = [
+            { nombre: 'Lun-Mie-Vie', dias: [0, 2, 4] },
+            { nombre: 'Mar-Jue', dias: [1, 3] },
+            { nombre: 'Lun a Vie', dias: [0, 1, 2, 3, 4] },
+            { nombre: 'Fin de semana', dias: [5, 6] },
+            { nombre: 'Todos los dias', dias: [0, 1, 2, 3, 4, 5, 6] }
+        ];
+
+        function getActIcon(nombre) {
+            var lower = nombre.toLowerCase();
+            for (var k = 0; k < iconMap.length; k++) {
+                if (lower.includes(iconMap[k][0])) return iconMap[k][1];
+            }
+            return '🏃';
+        }
+        function getActColor(id) { return iconColors[id % iconColors.length]; }
 
         function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -293,43 +400,69 @@
             }
         }
 
+        function setFiltro(filtro, btn) {
+            filtroActual = filtro;
+            document.querySelectorAll('.filtro-pill').forEach(function(p) { p.classList.remove('activo'); });
+            btn.classList.add('activo');
+            renderLista();
+        }
+
+        function filtrarActividades() { renderLista(); }
+
+        function getActividadesFiltradas() {
+            var q = (document.getElementById('busquedaActividades') ? document.getElementById('busquedaActividades').value : '').toLowerCase().trim();
+            return allActividades.filter(function(act) {
+                var matchQ = !q || act.nombre.toLowerCase().includes(q) || (act.descripcion || '').toLowerCase().includes(q);
+                var matchF = filtroActual === 'todos' ||
+                    (filtroActual === 'franjas' && !act.tiene_horarios_flexibles) ||
+                    (filtroActual === 'flexibles' && act.tiene_horarios_flexibles);
+                return matchQ && matchF;
+            });
+        }
+
         function renderLista() {
             var container = document.getElementById('listaActividades');
             if (allActividades.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">No hay actividades. Crea una con el boton de arriba.</div>';
+                container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#94a3b8;">Cargando...</div>';
+                return;
+            }
+            var actividades = getActividadesFiltradas();
+            if (actividades.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#94a3b8;">No hay actividades que coincidan.</div>';
                 return;
             }
             var html = '';
-            allActividades.forEach(function(act) {
+            actividades.forEach(function(act) {
                 var franjas = act.franjas || [];
                 var totalFranjas = franjas.length;
                 var totalSocios = 0;
                 franjas.forEach(function(f) { totalSocios += (f.socios_count || 0); });
 
-                var meta = act.tiene_horarios_flexibles
-                    ? 'Acceso libre — ' + (act.socios_count || 0) + ' socios inscriptos'
-                    : totalFranjas + ' franjas horarias — ' + totalSocios + ' socios en total';
+                var footerInfo = act.tiene_horarios_flexibles
+                    ? (act.socios_count || 0) + ' socios inscriptos'
+                    : totalFranjas + ' franjas &middot; ' + totalSocios + ' socios';
 
-                var badge = act.tiene_horarios_flexibles
-                    ? '<span class="act-card-badge">Flexible</span>'
-                    : '<span class="act-card-badge">' + totalFranjas + ' horarios</span>';
+                var icon = getActIcon(act.nombre);
+                var color = getActColor(act.id);
 
                 var instructoresHtml = '';
                 if (act.instructores && act.instructores.length > 0) {
                     act.instructores.forEach(function(i) {
-                        instructoresHtml += '<span style="background:#e8f5e9;color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;">' + i.apellido + ', ' + i.nombre + '</span>';
+                        instructoresHtml += '<span style="background:#e8f5e9;color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">' + i.apellido + ', ' + i.nombre + '</span>';
                     });
                 } else {
-                    instructoresHtml = '<span style="color:var(--neutral-400);font-size:11px;">Sin instructor</span>';
+                    instructoresHtml = '<span style="color:var(--neutral-400);font-size:11px;">Sin instructor asignado</span>';
                 }
 
-                html += '<div class="act-card" onclick="abrirDetalle(' + act.id + ')">' +
-                    '<div style="flex:1;">' +
-                        '<div class="act-card-name">' + act.nombre + '</div>' +
-                        '<div class="act-card-meta">' + meta + '</div>' +
-                        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' + instructoresHtml + '</div>' +
+                html += '<div class="act-card-v2" onclick="abrirDetalle(' + act.id + ')">' +
+                    '<div class="act-icon-wrap" style="background:' + color + ';">' + icon + '</div>' +
+                    '<div class="act-card-v2-nombre">' + act.nombre + '</div>' +
+                    '<div class="act-card-v2-desc">' + (act.descripcion || '') + '</div>' +
+                    '<div class="act-card-v2-instructores">' + instructoresHtml + '</div>' +
+                    '<div class="act-card-v2-footer">' +
+                        '<span>' + footerInfo + '</span>' +
+                        '<span class="act-gestionar">Gestionar &#8594;</span>' +
                     '</div>' +
-                    '<div style="margin-left:12px;">' + badge + '</div>' +
                     '</div>';
             });
             container.innerHTML = html;
@@ -582,6 +715,71 @@
             var d = await r.json();
             if (d.success) { cerrarModal('modalNuevaActividad'); await cargarActividades(); }
             else alert('Error: ' + d.error);
+        }
+
+        // ─── PLANTILLAS ──────────────────────────────────────────────────────
+
+        function llenarHorasSelector() {
+            var sel = document.getElementById('plantillaHoraInicio');
+            if (sel.options.length > 0) return;
+            for (var h = HORA_INICIO; h < HORA_FIN; h++) {
+                var opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = (h < 10 ? '0' + h : h) + ':00';
+                sel.appendChild(opt);
+            }
+        }
+
+        function aplicarPlantilla(idx) {
+            var p = PLANTILLAS[idx];
+            document.getElementById('plantillaTitulo').textContent = 'Plantilla: ' + p.nombre;
+            document.getElementById('plantillaDiasTexto').textContent = p.dias.map(function(d) { return diasCorto[d]; }).join(', ');
+            document.getElementById('plantillaIdxInput').value = idx;
+            llenarHorasSelector();
+            document.getElementById('modalPlantilla').classList.add('active');
+        }
+
+        async function confirmarPlantilla() {
+            var idx = parseInt(document.getElementById('plantillaIdxInput').value);
+            var p = PLANTILLAS[idx];
+            var horaInicio = parseInt(document.getElementById('plantillaHoraInicio').value);
+            var duracion = parseInt(document.getElementById('plantillaDuracion').value);
+            var horaFin = horaInicio + duracion;
+
+            if (horaFin > HORA_FIN) {
+                alert('El horario de fin supera las ' + HORA_FIN + ':00');
+                return;
+            }
+
+            var act = allActividades.find(function(a) { return a.id === actividadActual; });
+            var franjaMap = {};
+            (act ? act.franjas || [] : []).forEach(function(f) {
+                franjaMap[f.dia_semana + '-' + f.hora_inicio] = true;
+            });
+
+            var diasNuevos = p.dias.filter(function(d) { return !franjaMap[d + '-' + horaInicio]; });
+            var diasExist = p.dias.filter(function(d) { return franjaMap[d + '-' + horaInicio]; });
+
+            if (diasNuevos.length === 0) {
+                alert('Ya existen franjas para todos los dias de esta plantilla en ese horario.');
+                return;
+            }
+            if (diasExist.length > 0) {
+                if (!confirm('Ya existe franja en ' + diasExist.map(function(d) { return diasCorto[d]; }).join(', ') + '. Se crean solo los dias disponibles. Continuar?')) return;
+            }
+
+            cerrarModal('modalPlantilla');
+            try {
+                await Promise.all(diasNuevos.map(function(dia) {
+                    return fetch('/api/actividades/' + actividadActual + '/franjas', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ dia_semana: dia, hora_inicio: horaInicio, hora_fin: horaFin })
+                    });
+                }));
+                await recargarActividadActual();
+            } catch(err) { alert('Error: ' + err.message); }
         }
 
         // ─── HELPERS ─────────────────────────────────────────────────────────
