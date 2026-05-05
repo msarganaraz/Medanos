@@ -300,16 +300,35 @@
                 } else {
                     var franjasHtml = '';
                     if (act.franjas && act.franjas.length > 0) {
+                        // Agrupar franjas por día
+                        var porDia = {};
                         act.franjas.forEach(function(f) {
-                            var hora = pad(f.hora_inicio) + ':00-' + pad(f.hora_fin) + ':00';
-                            franjasHtml += '<div class="franja-cell" onclick="abrirGestionFranja(' + f.id + ', ' + act.id + ')">' +
-                                '<div class="franja-hora">' + diasNombre[f.dia_semana] + '</div>' +
-                                '<div class="franja-hora">' + hora + '</div>' +
-                                '<div class="franja-count">' + (f.socios_count || 0) + ' socios | ' + (f.instructores_count || 0) + ' profes</div>' +
-                                '</div>';
+                            if (!porDia[f.dia_semana]) porDia[f.dia_semana] = [];
+                            porDia[f.dia_semana].push(f);
                         });
+                        // Ordenar días
+                        var diasConFranjas = Object.keys(porDia).map(Number).sort(function(a,b){ return a-b; });
+                        franjasHtml = '<div style="display:flex;gap:12px;flex-wrap:wrap;">';
+                        diasConFranjas.forEach(function(dia) {
+                            var franjasDia = porDia[dia].sort(function(a,b){ return a.hora_inicio - b.hora_inicio; });
+                            franjasHtml += '<div style="min-width:140px;flex:1;">' +
+                                '<div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--neutral-500);padding:6px 0;border-bottom:2px solid var(--primary);margin-bottom:8px;">' +
+                                    diasNombre[dia] +
+                                '</div>';
+                            franjasDia.forEach(function(f) {
+                                var hora = pad(f.hora_inicio) + ':00 - ' + pad(f.hora_fin) + ':00';
+                                var ocupacion = (f.socios_count || 0) + ' socios';
+                                if (f.instructores_count > 0) ocupacion += ' | ' + f.instructores_count + ' prof';
+                                franjasHtml += '<div class="franja-cell" onclick="abrirGestionFranja(' + f.id + ',' + act.id + ')">' +
+                                    '<div class="franja-hora">' + hora + '</div>' +
+                                    '<div class="franja-count">' + ocupacion + '</div>' +
+                                    '</div>';
+                            });
+                            franjasHtml += '</div>';
+                        });
+                        franjasHtml += '</div>';
                     } else {
-                        franjasHtml = '<div class="empty-message">Sin franjas horarias. Agregar una usando el boton.</div>';
+                        franjasHtml = '<div class="empty-message">Sin franjas. Use "+ Franja" para agregar horarios.</div>';
                     }
                     html += '<div class="activity-section">' +
                         '<div class="activity-header">' +
@@ -318,9 +337,7 @@
                                 '<button class="btn btn-secondary btn-sm" onclick="abrirModalAgregarFranja(' + act.id + ')">+ Franja</button>' +
                             '</div>' +
                         '</div>' +
-                        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;">' +
-                            franjasHtml +
-                        '</div>' +
+                        franjasHtml +
                         '</div>';
                 }
             });
