@@ -209,10 +209,10 @@
         <!-- ── VISTA DETALLE ── -->
         <div id="vistaDetalle" style="display:none;">
             <div class="detalle-header">
-                <button class="btn-volver" onclick="volverALista()">&#8592; Volver</button>
+                <button onclick="volverALista()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;">&#8592; Volver</button>
                 <h2 id="detalleNombre" style="margin:0;font-size:var(--text-2xl);flex:1;"></h2>
                 <span id="detalleDesc" style="color:var(--neutral-500);font-size:var(--text-sm);margin-right:12px;"></span>
-                <button class="btn btn-sm" style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;" onclick="eliminarActividadActual()">Eliminar actividad</button>
+                <button style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="eliminarActividadActual()">Eliminar actividad</button>
             </div>
             <div style="background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-lg);padding:20px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -232,7 +232,7 @@
                     <button class="template-btn" onclick="aplicarPlantilla(3)">Fin de semana</button>
                     <button class="template-btn" onclick="aplicarPlantilla(4)">Todos los dias</button>
                 </div>
-                <div class="grilla-wrapper">
+                <div class="grilla-wrapper" onmousemove="onGridMouseMove(event)" onmouseleave="cancelDragVisual()">
                     <div class="grilla" id="grillaHoraria"></div>
                 </div>
             </div>
@@ -257,10 +257,13 @@
                     <div id="gestioninstructores"><div class="empty-message">Cargando...</div></div>
                     <button class="btn btn-primary btn-sm" onclick="abrirBuscadorInstructor()" style="margin-top:10px;">+ Agregar instructor</button>
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;">
-                    <button class="btn btn-sm" style="color:#94a3b8;border:1px solid var(--neutral-200);background:white;font-size:12px;" onclick="dividirFranjaEnCuartos()">Dividir en cuartos</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px;">
+                    <div style="display:flex;gap:6px;">
+                        <button id="btnDividirCuartos" style="color:#94a3b8;border:1px solid var(--neutral-200);background:white;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;" onclick="dividirFranjaEnCuartos()">Dividir en cuartos</button>
+                        <button id="btnReunirCuartos" style="display:none;color:#2563eb;border:1px solid #93c5fd;background:white;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;" onclick="reunirEnUnaHora()">Reunir en 1 hora</button>
+                    </div>
                     <div style="display:flex;gap:8px;">
-                        <button class="btn btn-sm" style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;" onclick="eliminarFranjaActual()">Eliminar franja</button>
+                        <button style="color:#ef4444;border:1px solid #fca5a5;background:white;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;" onclick="eliminarFranjaActual()">Eliminar franja</button>
                         <button class="btn btn-secondary" onclick="cerrarModal('modalGestionarFranja')">Cerrar</button>
                     </div>
                 </div>
@@ -606,6 +609,10 @@
         function onDragEnter(dia, hora) {
             if (!isDragging || dia !== dragDia) return;
             dragEndHora = hora;
+            actualizarVisualDrag();
+        }
+
+        function actualizarVisualDrag() {
             var min = Math.min(dragStartHora, dragEndHora);
             var max = Math.max(dragStartHora, dragEndHora);
             document.querySelectorAll('.grilla-slot.vacio').forEach(function(cell) {
@@ -617,6 +624,27 @@
                     cell.classList.remove('seleccionado');
                 }
             });
+        }
+
+        function onGridMouseMove(e) {
+            if (!isDragging) return;
+            var target = e.target;
+            while (target && target.id !== 'grillaHoraria') {
+                if (target.classList && target.classList.contains('grilla-slot') && target.classList.contains('vacio')) {
+                    var dia = parseInt(target.dataset.dia);
+                    var hora = parseInt(target.dataset.hora);
+                    if (!isNaN(dia) && !isNaN(hora) && dia === dragDia && hora !== dragEndHora) {
+                        dragEndHora = hora;
+                        actualizarVisualDrag();
+                    }
+                    return;
+                }
+                target = target.parentElement;
+            }
+        }
+
+        function cancelDragVisual() {
+            document.querySelectorAll('.seleccionado').forEach(function(c) { c.classList.remove('seleccionado'); });
         }
 
         document.addEventListener('mouseup', async function() {
@@ -662,9 +690,17 @@
 
         // ─── GESTIONAR FRANJA ────────────────────────────────────────────────
 
+        var franjaBaseHora = -1;
+        var franjaDiaSemana = -1;
+
         async function abrirGestionFranja(franjaId, actividadId, dia, hora) {
             franjaActual = franjaId;
             actividadActual = actividadId;
+            franjaBaseHora = Math.floor(hora);
+            franjaDiaSemana = dia;
+            var esSubdividida = (hora !== Math.floor(hora));
+            document.getElementById('btnDividirCuartos').style.display = esSubdividida ? 'none' : 'inline-block';
+            document.getElementById('btnReunirCuartos').style.display = esSubdividida ? 'inline-block' : 'none';
             var act = allActividades.find(function(a) { return a.id === actividadId; });
             var titulo = (act ? act.nombre : '') + ' — ' + diasNombre[dia] + ' ' + horaToStr(hora);
             document.getElementById('gestionTitle').textContent = titulo;
@@ -863,6 +899,29 @@
                     });
                 }));
                 await fetch('/api/franjas/' + franjaActual, { method: 'DELETE', credentials: 'include' });
+                cerrarModal('modalGestionarFranja');
+                await recargarActividadActual();
+            } catch(err) { alert('Error: ' + err.message); }
+        }
+
+        async function reunirEnUnaHora() {
+            var act = allActividades.find(function(a) { return a.id === actividadActual; });
+            if (!act) return;
+            var cuartos = (act.franjas || []).filter(function(f) {
+                return f.dia_semana === franjaDiaSemana && Math.floor(f.hora_inicio) === franjaBaseHora;
+            });
+            var totalSocios = cuartos.reduce(function(s, f) { return s + (f.socios_count || 0); }, 0);
+            var aviso = totalSocios > 0 ? totalSocios + ' socios perderan su asignacion. ' : '';
+            if (!confirm(aviso + 'Reunir todos los cuartos de las ' + horaToStr(franjaBaseHora) + ' en una franja de 1 hora?')) return;
+            try {
+                await Promise.all(cuartos.map(function(f) {
+                    return fetch('/api/franjas/' + f.id, { method: 'DELETE', credentials: 'include' });
+                }));
+                await fetch('/api/actividades/' + actividadActual + '/franjas', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ dia_semana: franjaDiaSemana, hora_inicio: franjaBaseHora, hora_fin: franjaBaseHora + 1 })
+                });
                 cerrarModal('modalGestionarFranja');
                 await recargarActividadActual();
             } catch(err) { alert('Error: ' + err.message); }
