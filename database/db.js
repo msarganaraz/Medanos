@@ -75,6 +75,36 @@ async function initDB() {
   // Seed database if empty
   const initSeed = require('./init-seed');
   await initSeed();
+
+  // Crear franjas para actividades que no las tengan (migración de datos)
+  try {
+    const actividades = db.prepare('SELECT id, dias_horario FROM actividades WHERE activo = 1').all();
+    const diasMap = { 'Lun': 0, 'Mar': 1, 'Mié': 2, 'Jue': 3, 'Vie': 4, 'Sab': 5, 'Dom': 6 };
+
+    actividades.forEach(act => {
+      if (!act.dias_horario) return;
+
+      // Check if this activity has franjas
+      const franjas = db.prepare('SELECT COUNT(*) as count FROM franjas_horarias WHERE actividad_id = ?').get(act.id);
+      if (franjas.count > 0) return; // Ya tiene franjas
+
+      // Parse dias_horario y crear franjas
+      const partes = act.dias_horario.split(',')[0].trim().split(' ');
+      const diasStr = partes[0];
+      const horaInicio = parseInt(partes[1]);
+      const horaFin = parseInt(partes[3]);
+
+      const dias = diasStr.split('-').map(d => diasMap[d] || 0);
+      dias.forEach(dia => {
+        db.prepare(`
+          INSERT INTO franjas_horarias (actividad_id, dia_semana, hora_inicio, hora_fin)
+          VALUES (?, ?, ?, ?)
+        `).run(act.id, dia, horaInicio, horaFin);
+      });
+    });
+  } catch (err) {
+    // Silently ignore if franjas already exist
+  }
 }
 
 function saveDB() {
