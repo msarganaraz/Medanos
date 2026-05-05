@@ -33,15 +33,8 @@ async function initDB() {
 
   // Auto-migrate: agregar columnas/tablas que falten
   try {
-    // Agregar columna tiene_horarios_flexibles si no existe
-    const checkColumn = db.prepare(`PRAGMA table_info(actividades)`).all();
-    if (!checkColumn.some(col => col.name === 'tiene_horarios_flexibles')) {
-      db.run('ALTER TABLE actividades ADD COLUMN tiene_horarios_flexibles INTEGER DEFAULT 0');
-      console.log('✓ Migración: agregada columna tiene_horarios_flexibles');
-    }
-
     // Crear tabla franjas_horarias si no existe
-    db.run(`CREATE TABLE IF NOT EXISTS franjas_horarias (
+    db.exec(`CREATE TABLE IF NOT EXISTS franjas_horarias (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       actividad_id INTEGER REFERENCES actividades(id),
       dia_semana INTEGER NOT NULL,
@@ -51,7 +44,7 @@ async function initDB() {
     )`);
 
     // Crear tabla socio_franjas si no existe
-    db.run(`CREATE TABLE IF NOT EXISTS socio_franjas (
+    db.exec(`CREATE TABLE IF NOT EXISTS socio_franjas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       socio_id INTEGER REFERENCES socios(id),
       franja_id INTEGER REFERENCES franjas_horarias(id),
@@ -60,13 +53,21 @@ async function initDB() {
     )`);
 
     // Crear tabla instructor_franjas si no existe
-    db.run(`CREATE TABLE IF NOT EXISTS instructor_franjas (
+    db.exec(`CREATE TABLE IF NOT EXISTS instructor_franjas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       instructor_id INTEGER REFERENCES instructores(id),
       franja_id INTEGER REFERENCES franjas_horarias(id)
     )`);
 
-    console.log('✓ Migración: tablas de franjas verificadas');
+    // Intentar agregar columna tiene_horarios_flexibles (ignora si ya existe)
+    try {
+      db.exec('ALTER TABLE actividades ADD COLUMN tiene_horarios_flexibles INTEGER DEFAULT 0');
+      console.log('✓ Migración: agregada columna tiene_horarios_flexibles');
+    } catch (err) {
+      // Si falla, probablemente ya existe
+    }
+
+    console.log('✓ Migración: esquema verificado y actualizado');
   } catch (err) {
     console.error('⚠ Error en migración:', err.message);
   }
