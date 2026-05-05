@@ -295,20 +295,20 @@
 
         async function abrirDetallesFranja(franjaId) {
             try {
-                const r = await fetch(\`/api/franjas/\${franjaId}\`, { credentials: 'include' });
+                const r = await fetch('/api/franjas/' + franjaId, { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
                     const f = d.franja;
-                    document.getElementById('detalleTitle').textContent = \`\${f.actividad_nombre} - \${diasNombre[f.dia_semana]} \${f.hora_inicio}:00-\${f.hora_fin}:00\`;
+                    document.getElementById('detalleTitle').textContent = f.actividad_nombre + ' - ' + diasNombre[f.dia_semana] + ' ' + f.hora_inicio + ':00-' + f.hora_fin + ':00';
 
                     const sociosHtml = (d.socios || []).length === 0
                         ? '<div class="empty-message">Sin socios asignados</div>'
-                        : d.socios.map(s => \`<div class="persona-item"><span class="persona-name">\${s.apellido}, \${s.nombre}</span></div>\`).join('');
+                        : d.socios.map(s => '<div class="persona-item"><span class="persona-name">' + s.apellido + ', ' + s.nombre + '</span></div>').join('');
                     document.getElementById('detallesocios').innerHTML = sociosHtml;
 
                     const instructoresHtml = (d.instructores || []).length === 0
                         ? '<div class="empty-message">Sin instructores asignados</div>'
-                        : d.instructores.map(i => \`<div class="persona-item"><span class="persona-name">\${i.apellido}, \${i.nombre}</span></div>\`).join('');
+                        : d.instructores.map(i => '<div class="persona-item"><span class="persona-name">' + i.apellido + ', ' + i.nombre + '</span></div>').join('');
                     document.getElementById('detalleinstructores').innerHTML = instructoresHtml;
 
                     document.getElementById('modalFranjaDetalle').classList.add('active');
@@ -321,7 +321,7 @@
         async function abrirGestionActividad(actividadId) {
             actividadActual = actividadId;
             try {
-                const r = await fetch(\`/api/actividades/\${actividadId}\`, { credentials: 'include' });
+                const r = await fetch('/api/actividades/' + actividadId, { credentials: 'include' });
                 const d = await r.json();
                 if (d.success && d.franjas && d.franjas.length > 0) {
                     franjaActual = d.franjas[0].id;
@@ -335,27 +335,17 @@
 
         async function cargarDetallesFranja() {
             try {
-                const r = await fetch(\`/api/franjas/\${franjaActual}\`, { credentials: 'include' });
+                const r = await fetch('/api/franjas/' + franjaActual, { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
                     const sociosHtml = (d.socios || []).length === 0
                         ? '<div class="empty-message">Sin socios asignados</div>'
-                        : d.socios.map(s => \`
-                            <div class="persona-item">
-                                <span class="persona-name">\${s.apellido}, \${s.nombre}</span>
-                                <button class="remove-btn" onclick="quitarSocio(\${franjaActual}, \${s.id})">✕</button>
-                            </div>
-                        \`).join('');
+                        : d.socios.map(s => '<div class="persona-item"><span class="persona-name">' + s.apellido + ', ' + s.nombre + '</span><button class="remove-btn" onclick="quitarSocio(' + franjaActual + ', ' + s.id + ')">✕</button></div>').join('');
                     document.getElementById('gestionsocios').innerHTML = sociosHtml;
 
                     const instructoresHtml = (d.instructores || []).length === 0
                         ? '<div class="empty-message">Sin instructores asignados</div>'
-                        : d.instructores.map(i => \`
-                            <div class="persona-item">
-                                <span class="persona-name">\${i.apellido}, \${i.nombre}</span>
-                                <button class="remove-btn" onclick="quitarInstructor(\${franjaActual}, \${i.id})">✕</button>
-                            </div>
-                        \`).join('');
+                        : d.instructores.map(i => '<div class="persona-item"><span class="persona-name">' + i.apellido + ', ' + i.nombre + '</span><button class="remove-btn" onclick="quitarInstructor(' + franjaActual + ', ' + i.id + ')">✕</button></div>').join('');
                     document.getElementById('gestioninstructores').innerHTML = instructoresHtml;
                 }
             } catch (err) {
@@ -365,7 +355,7 @@
 
         async function abrirModalAgregarSocio() {
             try {
-                const r = await fetch(\`/api/franjas/\${franjaActual}/socios/disponibles\`, { credentials: 'include' });
+                const r = await fetch('/api/franjas/' + franjaActual + '/socios/disponibles', { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
                     const options = d.socios.map(s => \`<option value="\${s.id}">\${s.apellido}, \${s.nombre}</option>\`).join('');
@@ -384,7 +374,7 @@
                 return;
             }
             try {
-                const r = await fetch(\`/api/franjas/\${franjaActual}/socios\`, {
+                const r = await fetch('/api/franjas/' + franjaActual + '/socios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -406,7 +396,7 @@
         async function quitarSocio(franjaId, socioId) {
             if (!confirm('¿Quitar socio de esta franja?')) return;
             try {
-                const r = await fetch(\`/api/franjas/\${franjaId}/socios/\${socioId}\`, {
+                const r = await fetch('/api/franjas/' + franjaId + '/socios/' + socioId, {
                     method: 'DELETE',
                     credentials: 'include'
                 });
@@ -424,11 +414,11 @@
 
         async function abrirModalAgregarInstructor() {
             try {
-                const r = await fetch(\`/api/franjas/\${franjaActual}/instructores/disponibles\`, { credentials: 'include' });
+                const r = await fetch('/api/franjas/' + franjaActual + '/instructores/disponibles', { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
-                    const options = d.instructores.map(i => \`<option value="\${i.id}">\${i.apellido}, \${i.nombre}</option>\`).join('');
-                    document.getElementById('selectInstructor').innerHTML = \`<option value="">Seleccionar...</option>\${options}\`;
+                    const options = d.instructores.map(i => '<option value="' + i.id + '">' + i.apellido + ', ' + i.nombre + '</option>').join('');
+                    document.getElementById('selectInstructor').innerHTML = '<option value="">Seleccionar...</option>' + options;
                     document.getElementById('modalAgregarInstructor').classList.add('active');
                 }
             } catch (err) {
@@ -443,7 +433,7 @@
                 return;
             }
             try {
-                const r = await fetch(\`/api/franjas/\${franjaActual}/instructores\`, {
+                const r = await fetch('/api/franjas/' + franjaActual + '/instructores', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -465,7 +455,7 @@
         async function quitarInstructor(franjaId, instructorId) {
             if (!confirm('¿Quitar instructor de esta franja?')) return;
             try {
-                const r = await fetch(\`/api/franjas/\${franjaId}/instructores/\${instructorId}\`, {
+                const r = await fetch('/api/franjas/' + franjaId + '/instructores/' + instructorId, {
                     method: 'DELETE',
                     credentials: 'include'
                 });
