@@ -318,14 +318,27 @@
                 document.getElementById('detalleTelefono').textContent = i.telefono || '—';
                 document.getElementById('detalleEmail').textContent = i.email || '—';
 
-                const actividadesHtml = actividades.length === 0
-                    ? '<div style="color: var(--neutral-400); font-size: var(--text-sm);">Sin actividades asignadas</div>'
-                    : actividades.map(a => `
-                        <div style="padding: 8px; background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
-                            <div style="font-weight: var(--weight-semibold); color: var(--neutral-900);">${a.nombre}</div>
-                            <div style="font-size: var(--text-sm); color: var(--neutral-500);">${a.dias_horario || 'Horario no definido'}</div>
-                        </div>
-                    `).join('');
+                var diasAbrev = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+                function formatFranjas(franjas) {
+                    if (!franjas || franjas.length === 0) return 'Sin horario asignado';
+                    return franjas.map(function(f) {
+                        var hi = f.hora_inicio < 10 ? '0' + f.hora_inicio : '' + f.hora_inicio;
+                        var hf = f.hora_fin < 10 ? '0' + f.hora_fin : '' + f.hora_fin;
+                        return diasAbrev[f.dia_semana] + ' ' + hi + ':00-' + hf + ':00';
+                    }).join(', ');
+                }
+
+                var actividadesHtml = '';
+                if (actividades.length === 0) {
+                    actividadesHtml = '<div style="color: var(--neutral-400); font-size: var(--text-sm);">Sin actividades asignadas</div>';
+                } else {
+                    actividades.forEach(function(a) {
+                        actividadesHtml += '<div style="padding: 8px; background: var(--neutral-50); border-radius: var(--radius-md); border-left: 3px solid var(--primary); margin-bottom: 6px;">' +
+                            '<div style="font-weight: 600; color: var(--neutral-900);">' + a.nombre + '</div>' +
+                            '<div style="font-size: 13px; color: var(--neutral-500);">' + formatFranjas(a.franjas) + '</div>' +
+                            '</div>';
+                    });
+                }
 
                 document.getElementById('detalleActividades').innerHTML = actividadesHtml;
                 document.getElementById('modalDetalle').classList.add('active');

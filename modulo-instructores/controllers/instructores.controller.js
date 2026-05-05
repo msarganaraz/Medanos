@@ -15,13 +15,24 @@ function obtenerInstructor(req, res) {
   try {
     const instructor = db.prepare('SELECT * FROM instructores WHERE id = ?').get(id);
     if (!instructor) return res.status(404).json({ success: false, error: 'Instructor no encontrado' });
-    const actividades = db.prepare(`
-      SELECT a.id, a.nombre, a.dias_horario
+    const franjaRows = db.prepare(`
+      SELECT a.id as actividad_id, a.nombre as actividad_nombre,
+        f.dia_semana, f.hora_inicio, f.hora_fin
       FROM actividades a
-      JOIN instructor_actividades ia ON a.id = ia.actividad_id
-      WHERE ia.instructor_id = ? AND a.activo = 1
-      ORDER BY a.nombre
+      JOIN franjas_horarias f ON f.actividad_id = a.id
+      JOIN instructor_franjas inf ON inf.franja_id = f.id
+      WHERE inf.instructor_id = ? AND a.activo = 1
+      ORDER BY a.nombre, f.dia_semana, f.hora_inicio
     `).all(id);
+
+    const actMap = {};
+    franjaRows.forEach(function(row) {
+      if (!actMap[row.actividad_id]) {
+        actMap[row.actividad_id] = { id: row.actividad_id, nombre: row.actividad_nombre, franjas: [] };
+      }
+      actMap[row.actividad_id].franjas.push({ dia_semana: row.dia_semana, hora_inicio: row.hora_inicio, hora_fin: row.hora_fin });
+    });
+    const actividades = Object.values(actMap);
     res.json({ success: true, instructor, actividades });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

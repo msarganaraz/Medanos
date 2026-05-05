@@ -18,22 +18,21 @@ function obtenerActividades(req, res) {
     `).all();
 
     const resultado = actividades.map(act => {
-      // Get franjas for this activity
       const franjas = obtenerFranjasActividad(act.id);
 
+      const instructores = db.prepare(`
+        SELECT DISTINCT i.apellido, i.nombre
+        FROM instructores i
+        JOIN instructor_franjas inf ON i.id = inf.instructor_id
+        JOIN franjas_horarias f ON inf.franja_id = f.id
+        WHERE f.actividad_id = ?
+        ORDER BY i.apellido
+      `).all(act.id);
+
       if (franjas.length === 0) {
-        // No franjas = flexible activity, count socios directly
-        const socios_count = db.prepare(`
-          SELECT COUNT(*) as count FROM socios s
-          WHERE s.id IN (
-            SELECT DISTINCT sf.socio_id FROM socio_franjas sf
-            WHERE sf.franja_id NOT IN (SELECT id FROM franjas_horarias)
-          )
-        `).get()?.count || 0;
-        return { ...act, tiene_horarios_flexibles: 1, socios_count };
+        return { ...act, tiene_horarios_flexibles: 1, socios_count: 0, instructores };
       } else {
-        // Has franjas = fixed schedule activity
-        return { ...act, tiene_horarios_flexibles: 0, franjas };
+        return { ...act, tiene_horarios_flexibles: 0, franjas, instructores };
       }
     });
 
