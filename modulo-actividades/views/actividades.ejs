@@ -232,12 +232,12 @@
                     renderActividades();
                 } else {
                     const container = document.getElementById('activitiesContainer');
-                    container.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">Error: ${d.error || 'Error al cargar actividades'}</div>`;
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Error: ' + (d.error || 'Error al cargar actividades') + '</div>';
                 }
             } catch (err) {
                 console.error(err);
                 const container = document.getElementById('activitiesContainer');
-                container.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">Error: ${err.message}</div>`;
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: red;">Error: ' + err.message + '</div>';
             }
         }
 
@@ -251,43 +251,38 @@
             let html = '';
             allActividades.forEach(act => {
                 if (act.tiene_horarios_flexibles) {
-                    html += `
-                        <div class="activity-section">
-                            <div class="activity-header">
-                                <div class="activity-title">${act.nombre}</div>
-                                <div class="activity-actions">
-                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionFlexible(${act.id})">➕ Gestionar</button>
-                                </div>
-                            </div>
-                            <div class="flexible-activity">
-                                <span>Acceso libre (sin franjas definidas)</span>
-                                <span class="flexible-count">${act.socios_count || 0} socios</span>
-                            </div>
-                        </div>
-                    `;
+                    html += '<div class="activity-section">' +
+                        '<div class="activity-header">' +
+                            '<div class="activity-title">' + act.nombre + '</div>' +
+                            '<div class="activity-actions">' +
+                                '<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionFlexible(' + act.id + ')">&#10133; Gestionar</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flexible-activity">' +
+                            '<span>Acceso libre (sin franjas definidas)</span>' +
+                            '<span class="flexible-count">' + (act.socios_count || 0) + ' socios</span>' +
+                        '</div>' +
+                        '</div>';
                 } else {
-                    html += `
-                        <div class="activity-section">
-                            <div class="activity-header">
-                                <div class="activity-title">${act.nombre}</div>
-                                <div class="activity-actions">
-                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionActividad(${act.id})">⚙️ Gestionar</button>
-                                </div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
-                                ${(act.franjas || []).map(f => {
-                                    const hora = \`\${String(f.hora_inicio).padStart(2, '0')}:00-\${String(f.hora_fin).padStart(2, '0')}:00\`;
-                                    return \`
-                                        <div class="franja-cell" onclick="abrirDetallesFranja(\${f.id})">
-                                            <div class="franja-hora">\${diasNombre[f.dia_semana]}</div>
-                                            <div class="franja-hora">\${hora}</div>
-                                            <div class="franja-count">\${f.socios_count || 0} socios | \${f.instructores_count || 0} profes</div>
-                                        </div>
-                                    \`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
+                    var franjasHtml = (act.franjas || []).map(function(f) {
+                        var hora = String(f.hora_inicio).padStart(2, '0') + ':00-' + String(f.hora_fin).padStart(2, '0') + ':00';
+                        return '<div class="franja-cell" onclick="abrirDetallesFranja(' + f.id + ')">' +
+                            '<div class="franja-hora">' + diasNombre[f.dia_semana] + '</div>' +
+                            '<div class="franja-hora">' + hora + '</div>' +
+                            '<div class="franja-count">' + (f.socios_count || 0) + ' socios | ' + (f.instructores_count || 0) + ' profes</div>' +
+                            '</div>';
+                    }).join('');
+                    html += '<div class="activity-section">' +
+                        '<div class="activity-header">' +
+                            '<div class="activity-title">' + act.nombre + '</div>' +
+                            '<div class="activity-actions">' +
+                                '<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="abrirGestionActividad(' + act.id + ')">&#9881;&#65039; Gestionar</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">' +
+                            franjasHtml +
+                        '</div>' +
+                        '</div>';
                 }
             });
             container.innerHTML = html;
@@ -358,8 +353,8 @@
                 const r = await fetch('/api/franjas/' + franjaActual + '/socios/disponibles', { credentials: 'include' });
                 const d = await r.json();
                 if (d.success) {
-                    const options = d.socios.map(s => \`<option value="\${s.id}">\${s.apellido}, \${s.nombre}</option>\`).join('');
-                    document.getElementById('selectSocio').innerHTML = \`<option value="">Seleccionar...</option>\${options}\`;
+                    const options = d.socios.map(s => '<option value="' + s.id + '">' + s.apellido + ', ' + s.nombre + '</option>').join('');
+                    document.getElementById('selectSocio').innerHTML = '<option value="">Seleccionar...</option>' + options;
                     document.getElementById('modalAgregarSocio').classList.add('active');
                 }
             } catch (err) {
