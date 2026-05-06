@@ -1,37 +1,34 @@
+// modulo-socios/routes/socios.routes.js
 const express = require('express');
-const router = express.Router();
 const { requireRole } = require('../../middleware/auth');
 const {
-  obtenerSocios,
-  obtenerSocio,
-  crearSocio,
-  editarSocio,
-  asignarActividad
+  listarSocios,
+  verSocio,
+  crearSocioHandler,
+  editarSocioHandler,
+  agregarMiembroHandler,
+  quitarMiembroHandler,
+  agregarActividadHandler,
+  quitarActividadHandler
 } = require('../controllers/socios.controller');
 
-// GET lista de socios — admin, recepcion, tesoreria
-router.get('/api/socios', requireRole(['admin', 'recepcion', 'tesoreria']), obtenerSocios);
+const router = express.Router();
 
-// GET socio por ID — admin, recepcion, tesoreria
-router.get('/api/socios/:id', requireRole(['admin', 'recepcion', 'tesoreria']), obtenerSocio);
+router.get('/api/socios', (req, res) => listarSocios(req, res));
+router.get('/api/socios/:id', (req, res) => verSocio(req, res));
+router.post('/api/socios', requireRole(['admin']), (req, res) => crearSocioHandler(req, res));
+router.put('/api/socios/:id', requireRole(['admin']), (req, res) => editarSocioHandler(req, res));
 
-// POST crear socio — admin, recepcion
-router.post('/api/socios', requireRole(['admin', 'recepcion']), crearSocio);
+router.post('/api/socios/:id/miembros', requireRole(['admin']), (req, res) => agregarMiembroHandler(req, res));
+router.delete('/api/socios/:id/miembros/:miembro_id', requireRole(['admin']), (req, res) => quitarMiembroHandler(req, res));
 
-// PUT editar socio — admin, recepcion
-router.put('/api/socios/:id', requireRole(['admin', 'recepcion']), editarSocio);
+router.post('/api/socios/:id/actividades', requireRole(['admin']), (req, res) => agregarActividadHandler(req, res));
+router.delete('/api/socios/:id/actividades/:actividad_grupo_id', requireRole(['admin']), (req, res) => quitarActividadHandler(req, res));
 
-// POST asignar actividad a socio — admin, recepcion
-router.post('/api/socios/:socio_id/actividades', requireRole(['admin', 'recepcion']), asignarActividad);
-
-// GET página de socios
-router.get('/socios', requireRole(['admin', 'recepcion', 'tesoreria']), (req, res) => {
-  res.render('socios', { usuario: req.session.usuario });
-});
-
-// GET página de legajo (perfil de socio)
-router.get('/socios/:id/legajo', requireRole(['admin', 'recepcion', 'tesoreria']), (req, res) => {
-  res.render('legajo', { usuario: req.session.usuario, socioId: req.params.id });
+// View
+router.get('/socios', (req, res) => {
+  if (!req.session.usuario) return res.redirect('/login');
+  res.render('modulo-socios/socios');
 });
 
 module.exports = router;
