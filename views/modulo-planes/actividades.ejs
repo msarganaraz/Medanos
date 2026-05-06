@@ -1,0 +1,160 @@
+<!-- views/modulo-planes/actividades.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Actividades - Medanos</title>
+  <link rel="stylesheet" href="/css/modulos.css">
+  <style>
+    .actividades-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .btn-crear { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .tabla { width: 100%; border-collapse: collapse; }
+    .tabla th { background: #f3f4f6; padding: 12px; text-align: left; font-weight: bold; }
+    .tabla td { padding: 12px; border-bottom: 1px solid #eee; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px; }
+    .btn-editar { background: #8b5cf6; color: white; }
+    .btn-eliminar { background: #ef4444; color: white; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal.activo { display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 400px; width: 90%; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-guardar { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-cancelar { background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="actividades-container">
+    <div class="header">
+      <h1>Actividades</h1>
+      <button class="btn-crear" onclick="abrirModal()">+ Crear Actividad</button>
+    </div>
+
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Precio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2>Actividad</h2>
+      <form id="form">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="nombre" required>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" id="descripcion">
+        </div>
+        <div class="form-group">
+          <label>Precio Base</label>
+          <input type="number" id="precio_base" step="0.01" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-guardar">Guardar</button>
+          <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let actividades = [];
+    let editando = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      cargar();
+      document.getElementById('form').addEventListener('submit', guardar);
+    });
+
+    async function cargar() {
+      const res = await fetch('/api/actividades');
+      const data = await res.json();
+      if (data.success) {
+        actividades = data.actividades;
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = actividades.map(a => `
+          <tr>
+            <td>${a.nombre}</td>
+            <td>${a.descripcion || '-'}</td>
+            <td>$${a.precio_base}</td>
+            <td>
+              <button class="btn-sm btn-editar" onclick="editar(${a.id})">Editar</button>
+              <button class="btn-sm btn-eliminar" onclick="eliminar(${a.id})">Eliminar</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function abrirModal() {
+      editando = null;
+      document.getElementById('form').reset();
+      document.getElementById('modal').classList.add('activo');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal').classList.remove('activo');
+    }
+
+    function editar(id) {
+      const act = actividades.find(a => a.id === id);
+      editando = id;
+      document.getElementById('nombre').value = act.nombre;
+      document.getElementById('descripcion').value = act.descripcion || '';
+      document.getElementById('precio_base').value = act.precio_base;
+      document.getElementById('modal').classList.add('activo');
+    }
+
+    async function guardar(e) {
+      e.preventDefault();
+      const datos = {
+        nombre: document.getElementById('nombre').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio_base: parseFloat(document.getElementById('precio_base').value)
+      };
+
+      const url = editando ? `/api/actividades/${editando}` : '/api/actividades';
+      const method = editando ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+      const data = await res.json();
+      if (data.success) {
+        cerrarModal();
+        cargar();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    }
+
+    async function eliminar(id) {
+      if (!confirm('¿Eliminar esta actividad?')) return;
+      const res = await fetch(`/api/actividades/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        cargar();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    }
+  </script>
+</body>
+</html>
