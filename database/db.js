@@ -67,14 +67,6 @@ async function initDB() {
       // Si falla, probablemente ya existe
     }
 
-    // Migration: add plan_id to socios
-    try {
-      db.exec(`ALTER TABLE socios ADD COLUMN plan_id INTEGER REFERENCES planes_cuota(id);`);
-      console.log('✓ Migración: agregada columna plan_id a socios');
-    } catch (err) {
-      // Column already exists
-    }
-
     // Migration: ensure estado column has correct values
     // (No action needed if column exists; it will have NULL/0 values that we'll treat as ACTIVO)
 
