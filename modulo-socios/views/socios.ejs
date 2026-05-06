@@ -1,258 +1,242 @@
+<!-- views/modulo-socios/socios.ejs -->
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Socios — Club Médanos Verdes</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Socios - Medanos</title>
+  <link rel="stylesheet" href="/css/modulos.css">
+  <style>
+    .socios-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header-socios { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .btn-crear { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-crear:hover { background: #059669; }
+    .busqueda-box { display: flex; gap: 10px; margin-bottom: 20px; }
+    .busqueda-box input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .tabla-socios { width: 100%; border-collapse: collapse; }
+    .tabla-socios th { background: #f3f4f6; padding: 12px; text-align: left; font-weight: bold; }
+    .tabla-socios td { padding: 12px; border-bottom: 1px solid #eee; }
+    .tabla-socios tr:hover { background: #f9fafb; }
+    .estado-badge { padding: 4px 8px; border-radius: 3px; font-size: 12px; }
+    .estado-activo { background: #d1fae5; color: #065f46; }
+    .estado-suspendido { background: #fef3c7; color: #92400e; }
+    .estado-baja { background: #fee2e2; color: #991b1b; }
+    .acciones { display: flex; gap: 8px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; }
+    .btn-ver { background: #3b82f6; color: white; }
+    .btn-editar { background: #8b5cf6; color: white; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal.activo { display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; }
+    .modal-titulo { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-guardar { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-cancelar { background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>👥 Socios</h1>
-            <p>Gestión de socios del club</p>
-        </div>
-
-        <div class="top-bar">
-            <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo socio</button>
-            <a href="/dashboard" class="btn btn-secondary">← Volver al dashboard</a>
-        </div>
-
-        <div class="content-card">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Buscar socio por nombre, apellido o DNI..." onkeyup="filtrarSocios()">
-            </div>
-
-            <table id="sociosTable">
-                <thead>
-                    <tr>
-                        <th>N° Socio</th>
-                        <th>Apellido, Nombre</th>
-                        <th>DNI</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="sociosBody">
-                    <tr><td colspan="6" class="empty-state">Cargando socios...</td></tr>
-                </tbody>
-            </table>
-        </div>
+  <div class="socios-container">
+    <div class="header-socios">
+      <h1>Socios</h1>
+      <button class="btn-crear" onclick="abrirModalCrearSocio()">+ Crear Socio</button>
     </div>
 
-    <!-- Modal Crear/Editar -->
-    <div class="modal" id="modalSocio">
-        <div style="position: relative;">
-            <button class="modal-close" onclick="cerrarModal('modalSocio')">✕</button>
-            <div class="modal-content">
-                <div class="modal-header" id="modalTitle">Nuevo socio</div>
-                <form id="socioForm" onsubmit="guardarSocio(event)">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>Apellido *</label>
-                            <input type="text" id="apellido" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nombre *</label>
-                            <input type="text" id="nombre" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>DNI</label>
-                        <input type="text" id="dni">
-                    </div>
-                    <div class="form-group">
-                        <label>Fecha de nacimiento</label>
-                        <input type="date" id="fecha_nacimiento">
-                    </div>
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="tel" id="telefono">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email">
-                    </div>
-                    <div class="form-group">
-                        <label>Domicilio</label>
-                        <input type="text" id="domicilio">
-                    </div>
-                    <div class="form-group" id="estadoGroup" style="display: none;">
-                        <label>Estado</label>
-                        <select id="estado">
-                            <option value="ACTIVO">Activo</option>
-                            <option value="INACTIVO">Inactivo</option>
-                            <option value="SUSPENDIDO">Suspendido</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="observacionesGroup" style="display: none;">
-                        <label>Observaciones</label>
-                        <textarea id="observaciones" rows="3"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Guardar</button>
-                        <button type="button" class="btn-cancel" onclick="cerrarModal('modalSocio')">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div class="busqueda-box">
+      <input type="text" id="busqueda" placeholder="Buscar por número, apellido, nombre..." onkeyup="buscarSocios()">
+      <select id="filtroEstado" onchange="filtrarSocios()">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVO">Activo</option>
+        <option value="SUSPENDIDO">Suspendido</option>
+        <option value="DADO_DE_BAJA">Dado de baja</option>
+      </select>
     </div>
 
-    <script>
-        let allSocios = [];
-        let editandoId = null;
+    <table class="tabla-socios">
+      <thead>
+        <tr>
+          <th>Nº Socio</th>
+          <th>Apellido</th>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th>Plan</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-socios">
+        <!-- Cargado por JS -->
+      </tbody>
+    </table>
+  </div>
 
-        async function cargarSocios() {
-            try {
-                const r = await fetch('/api/socios', { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    allSocios = d.socios || [];
-                    renderSocios();
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
+  <!-- Modal: Crear/Editar Socio -->
+  <div id="modalSocio" class="modal">
+    <div class="modal-content">
+      <div class="modal-titulo">Crear Socio</div>
+      <form id="formSocio">
+        <div class="form-group">
+          <label>Número de Socio</label>
+          <input type="text" id="numero_socio" required>
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input type="text" id="apellido" required>
+        </div>
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="nombre" required>
+        </div>
+        <div class="form-group">
+          <label>Plan</label>
+          <select id="plan_id" required>
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>DNI</label>
+          <input type="text" id="dni">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" id="telefono">
+        </div>
+        <div class="form-group">
+          <label>Domicilio</label>
+          <input type="text" id="domicilio">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-guardar">Guardar</button>
+          <button type="button" class="btn-cancelar" onclick="cerrarModal('modalSocio')">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-        function renderSocios() {
-            const body = document.getElementById('sociosBody');
-            if (allSocios.length === 0) {
-                body.innerHTML = '<tr><td colspan="6" class="empty-state">No hay socios</td></tr>';
-                return;
-            }
-            body.innerHTML = allSocios.map(s => `
-                <tr onclick="abrirLegajo(${s.id})">
-                    <td><strong>${s.numero_socio}</strong></td>
-                    <td>${s.apellido}, ${s.nombre}</td>
-                    <td>${s.dni || '—'}</td>
-                    <td>${s.telefono || '—'}</td>
-                    <td><span class="badge badge-${s.estado.toLowerCase()}">${s.estado}</span></td>
-                    <td onclick="event.stopPropagation()">
-                        <button class="btn-action" onclick="abrirModalEditar(${s.id})">Editar</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+  <script>
+    let planes = [];
+    let socios = [];
 
-        function filtrarSocios() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allSocios.filter(s =>
-                s.nombre.toLowerCase().includes(search) ||
-                s.apellido.toLowerCase().includes(search) ||
-                (s.dni && s.dni.includes(search)) ||
-                s.numero_socio.includes(search)
-            );
-            const body = document.getElementById('sociosBody');
-            if (filtered.length === 0) {
-                body.innerHTML = '<tr><td colspan="6" class="empty-state">No hay socios que coincidan</td></tr>';
-                return;
-            }
-            body.innerHTML = filtered.map(s => `
-                <tr onclick="abrirLegajo(${s.id})">
-                    <td><strong>${s.numero_socio}</strong></td>
-                    <td>${s.apellido}, ${s.nombre}</td>
-                    <td>${s.dni || '—'}</td>
-                    <td>${s.telefono || '—'}</td>
-                    <td><span class="badge badge-${s.estado.toLowerCase()}">${s.estado}</span></td>
-                    <td onclick="event.stopPropagation()">
-                        <button class="btn-action" onclick="abrirModalEditar(${s.id})">Editar</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarPlanes();
+      cargarSocios();
+      document.getElementById('formSocio').addEventListener('submit', guardarSocio);
+    });
 
-        function abrirModalCrear() {
-            editandoId = null;
-            document.getElementById('modalTitle').textContent = 'Nuevo socio';
-            document.getElementById('socioForm').reset();
-            document.getElementById('estadoGroup').style.display = 'none';
-            document.getElementById('observacionesGroup').style.display = 'none';
-            document.getElementById('modalSocio').classList.add('active');
-        }
+    async function cargarPlanes() {
+      const res = await fetch('/api/planes');
+      const data = await res.json();
+      if (data.success) {
+        planes = data.planes;
+        const select = document.getElementById('plan_id');
+        planes.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.nombre;
+          select.appendChild(opt);
+        });
+      }
+    }
 
-        async function abrirModalEditar(id) {
-            try {
-                const r = await fetch(`/api/socios/${id}`, { credentials: 'include' });
-                const d = await r.json();
-                if (d.success) {
-                    const s = d.socio;
-                    editandoId = id;
-                    document.getElementById('modalTitle').textContent = 'Editar socio';
-                    document.getElementById('apellido').value = s.apellido;
-                    document.getElementById('nombre').value = s.nombre;
-                    document.getElementById('dni').value = s.dni || '';
-                    document.getElementById('fecha_nacimiento').value = s.fecha_nacimiento || '';
-                    document.getElementById('telefono').value = s.telefono || '';
-                    document.getElementById('email').value = s.email || '';
-                    document.getElementById('domicilio').value = s.domicilio || '';
-                    document.getElementById('estado').value = s.estado;
-                    document.getElementById('observaciones').value = s.observaciones || '';
-                    document.getElementById('estadoGroup').style.display = 'block';
-                    document.getElementById('observacionesGroup').style.display = 'block';
-                    document.getElementById('modalSocio').classList.add('active');
-                }
-            } catch (err) {
-                alert('Error al cargar socio');
-            }
-        }
+    async function cargarSocios() {
+      const busqueda = document.getElementById('busqueda').value;
+      const estado = document.getElementById('filtroEstado').value;
+      const params = new URLSearchParams();
+      if (busqueda) params.append('busqueda', busqueda);
+      if (estado) params.append('estado', estado);
 
-        async function guardarSocio(e) {
-            e.preventDefault();
-            const apellido = document.getElementById('apellido').value;
-            const nombre = document.getElementById('nombre').value;
-            const dni = document.getElementById('dni').value;
-            const fecha_nacimiento = document.getElementById('fecha_nacimiento').value;
-            const telefono = document.getElementById('telefono').value;
-            const email = document.getElementById('email').value;
-            const domicilio = document.getElementById('domicilio').value;
+      const res = await fetch('/api/socios?' + params.toString());
+      const data = await res.json();
+      if (data.success) {
+        socios = data.socios;
+        renderizarTabla();
+      }
+    }
 
-            try {
-                if (editandoId) {
-                    const estado = document.getElementById('estado').value;
-                    const observaciones = document.getElementById('observaciones').value;
-                    const r = await fetch(`/api/socios/${editandoId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ apellido, nombre, dni, fecha_nacimiento, telefono, email, domicilio, estado, observaciones })
-                    });
-                    const d = await r.json();
-                    if (!d.success) {
-                        alert('Error: ' + d.error);
-                        return;
-                    }
-                } else {
-                    const r = await fetch('/api/socios', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ apellido, nombre, dni, fecha_nacimiento, telefono, email, domicilio })
-                    });
-                    const d = await r.json();
-                    if (!d.success) {
-                        alert('Error: ' + d.error);
-                        return;
-                    }
-                }
-                cerrarModal('modalSocio');
-                cargarSocios();
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        }
+    function renderizarTabla() {
+      const tbody = document.getElementById('tbody-socios');
+      tbody.innerHTML = socios.map(s => {
+        const plan = planes.find(p => p.id === s.plan_id);
+        const badgeClass = {
+          'ACTIVO': 'estado-activo',
+          'SUSPENDIDO': 'estado-suspendido',
+          'DADO_DE_BAJA': 'estado-baja'
+        }[s.estado] || '';
+        return `
+          <tr>
+            <td>${s.numero_socio || '-'}</td>
+            <td>${s.apellido}</td>
+            <td>${s.nombre}</td>
+            <td><span class="estado-badge ${badgeClass}">${s.estado}</span></td>
+            <td>${plan ? plan.nombre : '-'}</td>
+            <td>
+              <div class="acciones">
+                <button class="btn-sm btn-ver" onclick="verSocio(${s.id})">Ver</button>
+                <button class="btn-sm btn-editar" onclick="editarSocio(${s.id})">Editar</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
 
-        function cerrarModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
+    function buscarSocios() {
+      cargarSocios();
+    }
 
-        function abrirLegajo(id) {
-            window.location.href = `/socios/${id}/legajo`;
-        }
+    function filtrarSocios() {
+      cargarSocios();
+    }
 
+    function abrirModalCrearSocio() {
+      document.getElementById('formSocio').reset();
+      document.getElementById('modalSocio').classList.add('activo');
+    }
+
+    function cerrarModal(id) {
+      document.getElementById(id).classList.remove('activo');
+    }
+
+    async function guardarSocio(e) {
+      e.preventDefault();
+      const datos = {
+        numero_socio: document.getElementById('numero_socio').value,
+        apellido: document.getElementById('apellido').value,
+        nombre: document.getElementById('nombre').value,
+        plan_id: parseInt(document.getElementById('plan_id').value),
+        dni: document.getElementById('dni').value || null,
+        email: document.getElementById('email').value || null,
+        telefono: document.getElementById('telefono').value || null,
+        domicilio: document.getElementById('domicilio').value || null
+      };
+
+      const res = await fetch('/api/socios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+      });
+      const data = await res.json();
+      if (data.success) {
+        cerrarModal('modalSocio');
         cargarSocios();
-    </script>
+        alert('Socio creado exitosamente');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    }
+
+    function verSocio(id) {
+      alert('Detalle de socio ' + id + ' (implementar vista detalle)');
+    }
+
+    function editarSocio(id) {
+      alert('Editar socio ' + id + ' (implementar modal de edición)');
+    }
+  </script>
 </body>
 </html>
