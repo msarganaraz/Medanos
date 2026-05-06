@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const { initDB } = require('./database/db');
 const { requireAuth } = require('./middleware/auth');
 const { iniciarJobGenerarCuotas } = require('./jobs/generarCuotas');
+const planesRouter = require('./modulo-planes/routes/planes.routes');
+const cobranzaRouter = require('./modulo-cobranza/routes/cobranza.routes');
 
 let db;
 const servidor = express();
@@ -18,7 +20,8 @@ servidor.set('views', [
   path.join(__dirname, 'modulo-actividades/views'),
   path.join(__dirname, 'modulo-instructores/views'),
   path.join(__dirname, 'modulo-cuotas/views'),
-  path.join(__dirname, 'modulo-caja/views')
+  path.join(__dirname, 'modulo-caja/views'),
+  path.join(__dirname, 'modulo-cobranza/views')
 ]);
 
 // Middleware
@@ -134,6 +137,8 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
   servidor.use(require('./modulo-instructores/routes/instructores.routes'));
   servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
   servidor.use(require('./modulo-caja/routes/caja.routes'));
+  servidor.use(planesRouter);
+  servidor.use(cobranzaRouter);
 
   // Iniciar jobs automatizados
   iniciarJobGenerarCuotas();
