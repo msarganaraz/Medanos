@@ -24,6 +24,29 @@ CREATE TABLE socios (
   observaciones TEXT
 );
 
+-- MIEMBROS DEL GRUPO FAMILIAR
+CREATE TABLE miembros_grupo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  socio_id INTEGER REFERENCES socios(id) NOT NULL,
+  apellido TEXT NOT NULL,
+  nombre TEXT NOT NULL,
+  dni TEXT,
+  relacion TEXT NOT NULL,
+  activo INTEGER DEFAULT 1,
+  fecha_alta TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ACTIVIDADES CONTRATADAS POR GRUPO
+CREATE TABLE actividades_grupo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  socio_id INTEGER REFERENCES socios(id) NOT NULL,
+  actividad_id INTEGER REFERENCES actividades(id) NOT NULL,
+  cantidad INTEGER DEFAULT 1,
+  fecha_desde TEXT NOT NULL,
+  fecha_hasta TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ACTIVIDADES
 CREATE TABLE actividades (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
