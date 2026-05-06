@@ -1,0 +1,42 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img "Logo" [ref=e5]
+      - heading "Club Médanos Verdes" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Para todas las edades
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: 👥
+        - generic [ref=e11]: Socios
+      - generic [ref=e12]:
+        - generic [ref=e13]: 🏊
+        - generic [ref=e14]: Actividades
+      - generic [ref=e15]:
+        - generic [ref=e16]: 🏋️
+        - generic [ref=e17]: Instructores
+      - generic [ref=e18]:
+        - generic [ref=e19]: 💳
+        - generic [ref=e20]: Cuotas
+      - generic [ref=e21]:
+        - generic [ref=e22]: 💰
+        - generic [ref=e23]: Caja
+      - generic [ref=e24]:
+        - generic [ref=e25]: ⚙️
+        - generic [ref=e26]: Admin
+  - generic [ref=e28]:
+    - generic [ref=e29]: Ingresar
+    - generic [ref=e30]: Acceso al sistema de gestión
+    - generic [ref=e41]: Credenciales inválidas
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - generic [ref=e33]: Usuario
+        - textbox "Usuario" [ref=e34]:
+          - /placeholder: admin
+          - text: admin
+      - generic [ref=e35]:
+        - generic [ref=e36]: Contraseña
+        - textbox "Contraseña" [ref=e37]:
+          - /placeholder: ••••••••
+          - text: admin
+        - button "👁️" [ref=e38] [cursor=pointer]
+      - button "Ingresar" [ref=e40] [cursor=pointer]

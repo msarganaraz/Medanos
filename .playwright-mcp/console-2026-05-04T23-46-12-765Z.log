@@ -1,0 +1,5 @@
+[    1952ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://medanos-production.up.railway.app/login:0
+[    2271ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://medanos-production.up.railway.app/favicon.ico:0
+[ 1022792ms] Invalid or unexpected token
+[ 1223057ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://medanos-production.up.railway.app/login:0
+[ 1240532ms] Invalid or unexpected token

@@ -4,6 +4,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { initDB } = require('./database/db');
 const { requireAuth } = require('./middleware/auth');
+const { iniciarJobGenerarCuotas } = require('./jobs/generarCuotas');
 
 let db;
 const servidor = express();
@@ -133,6 +134,9 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
   servidor.use(require('./modulo-instructores/routes/instructores.routes'));
   servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
   servidor.use(require('./modulo-caja/routes/caja.routes'));
+
+  // Iniciar jobs automatizados
+  iniciarJobGenerarCuotas();
 
   const PORT = process.env.PORT || 3000;
   servidor.listen(PORT, () => {
