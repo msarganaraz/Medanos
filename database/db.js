@@ -75,6 +75,26 @@ async function initDB() {
     console.error('⚠ Error en migración:', err.message);
   }
 
+  // Load seed data if planes_cuota is empty
+  const planCountResult = db.exec('SELECT COUNT(*) as cnt FROM planes_cuota');
+  const planCount = planCountResult[0]?.values[0]?.[0] || 0;
+  if (planCount === 0) {
+    const seedSql = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf8');
+    const seedStatements = seedSql.split(';').filter(s => s.trim());
+    console.log(`⚠ Cargando ${seedStatements.length} sentencias de seed...`);
+    seedStatements.forEach(stmt => {
+      if (stmt.trim()) {
+        try {
+          db.exec(stmt);
+        } catch (err) {
+          console.error('Error loading seed:', err.message);
+        }
+      }
+    });
+    saveDB();
+    console.log('✓ Datos de seed cargados (planes y actividades)');
+  }
+
   // Seed database if empty
   const initSeed = require('./init-seed');
   await initSeed();
