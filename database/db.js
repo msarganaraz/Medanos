@@ -75,24 +75,48 @@ async function initDB() {
     console.error('⚠ Error en migración:', err.message);
   }
 
-  // Load seed data if planes_cuota is empty
+  // Dual seed mechanism:
+  // 1. seed.sql provides initial basic data (2 planes_cuota, 5 core actividades)
+  //    - Runs first if planes_cuota table is empty
+  //    - Uses INSERT OR IGNORE to safely coexist with other seeds
+  // 2. init-seed.js provides additional test/demo data (socios, instructores, usuarios, etc.)
+  //    - Runs after seed.sql
+  //    - Checks if usuarios table is populated to avoid duplicate seeding
+  // They work together to establish a complete initial database state
+
+  // Load seed.sql if planes_cuota is empty
   const planCountResult = db.exec('SELECT COUNT(*) as cnt FROM planes_cuota');
   const planCount = planCountResult[0]?.values[0]?.[0] || 0;
   if (planCount === 0) {
-    const seedSql = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf8');
-    const seedStatements = seedSql.split(';').filter(s => s.trim());
-    console.log(`⚠ Cargando ${seedStatements.length} sentencias de seed...`);
-    seedStatements.forEach(stmt => {
-      if (stmt.trim()) {
-        try {
-          db.exec(stmt);
-        } catch (err) {
-          console.error('Error loading seed:', err.message);
+    const seedPath = path.join(__dirname, 'seed.sql');
+    if (!fs.existsSync(seedPath)) {
+      console.log('⚠ seed.sql not found, skipping seed initialization');
+    } else {
+      const seedSql = fs.readFileSync(seedPath, 'utf8');
+      const seedStatements = seedSql.split(';').filter(s => s.trim());
+
+      let successCount = 0;
+      seedStatements.forEach(stmt => {
+        if (stmt.trim()) {
+          try {
+            db.exec(stmt);
+            successCount++;
+          } catch (err) {
+            console.error('Error loading seed statement:', err.message);
+          }
         }
-      }
-    });
-    saveDB();
-    console.log('✓ Datos de seed cargados (planes y actividades)');
+      });
+
+      saveDB();
+
+      // Verify seed was loaded successfully
+      const planCheckResult = db.exec('SELECT COUNT(*) as cnt FROM planes_cuota');
+      const planesCargados = planCheckResult[0]?.values[0]?.[0] || 0;
+      const actCheckResult = db.exec('SELECT COUNT(*) as cnt FROM actividades');
+      const actividadesCargadas = actCheckResult[0]?.values[0]?.[0] || 0;
+
+      console.log(`✓ Seed cargado: ${planesCargados} planes, ${actividadesCargadas} actividades`);
+    }
   }
 
   // Seed database if empty
