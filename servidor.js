@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const { initDB } = require('./database/db');
 const { requireAuth } = require('./middleware/auth');
 const { iniciarJobGenerarCuotas } = require('./jobs/generarCuotas');
+const sociosRouter = require('./modulo-socios/routes/socios.routes');
 const planesRouter = require('./modulo-planes/routes/planes.routes');
 const cobranzaRouter = require('./modulo-cobranza/routes/cobranza.routes');
 
@@ -132,7 +133,7 @@ servidor.get('/dashboard', requireAuth, (req, res) => {
 
   // Mountar módulos
   servidor.use(require('./modulo-admin/routes/admin.routes'));
-  servidor.use(require('./modulo-socios/routes/socios.routes'));
+  servidor.use(sociosRouter);
   servidor.use(require('./modulo-actividades/routes/actividades.routes'));
   servidor.use(require('./modulo-instructores/routes/instructores.routes'));
   servidor.use(require('./modulo-cuotas/routes/cuotas.routes'));
