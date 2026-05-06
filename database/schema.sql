@@ -141,7 +141,8 @@ CREATE TABLE cuotas (
   periodo TEXT NOT NULL,
   monto_total REAL NOT NULL,
   estado TEXT DEFAULT 'PENDIENTE',
-  fecha_vencimiento TEXT
+  fecha_vencimiento TEXT,
+  detalle_json TEXT
 );
 
 -- PAGOS

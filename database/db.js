@@ -67,6 +67,14 @@ async function initDB() {
       // Si falla, probablemente ya existe
     }
 
+    // Migration: add detalle_json to cuotas
+    try {
+      db.exec(`ALTER TABLE cuotas ADD COLUMN detalle_json TEXT;`);
+      console.log('✓ Migración: agregada columna detalle_json a cuotas');
+    } catch (err) {
+      // Column already exists
+    }
+
     // Migration: ensure estado column has correct values
     // (No action needed if column exists; it will have NULL/0 values that we'll treat as ACTIVO)
 
