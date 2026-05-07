@@ -198,7 +198,7 @@
                     <td>${p.descripcion || '—'}</td>
                     <td>$${p.monto.toFixed(2)}</td>
                     <td>${p.tipo || '—'}</td>
-                    <td><button class="btn-action" onclick="alert('Editar plan - Próximamente')">Editar</button></td>
+                    <td><button class="btn-action" onclick="editarPlan(${p.id}, '${p.nombre}', '${p.descripcion || ''}', ${p.monto})">Editar</button></td>
                 </tr>
             `).join('');
         }
@@ -245,11 +245,24 @@
             `).join('');
         }
 
+        let editandoPlanId = null;
+
         function abrirModalPlan() {
+            editandoPlanId = null;
             document.getElementById('planNombre').value = '';
             document.getElementById('planDescripcion').value = '';
             document.getElementById('planMonto').value = '';
             document.getElementById('planTipo').value = '';
+            document.querySelector('#modalPlan .modal-header').textContent = 'Nuevo plan de cuota';
+            document.getElementById('modalPlan').classList.add('active');
+        }
+
+        function editarPlan(id, nombre, descripcion, monto) {
+            editandoPlanId = id;
+            document.getElementById('planNombre').value = nombre;
+            document.getElementById('planDescripcion').value = descripcion;
+            document.getElementById('planMonto').value = monto;
+            document.querySelector('#modalPlan .modal-header').textContent = 'Editar plan';
             document.getElementById('modalPlan').classList.add('active');
         }
 
@@ -272,8 +285,10 @@
             const tipo = document.getElementById('planTipo').value;
 
             try {
-                const r = await fetch('/api/planes', {
-                    method: 'POST',
+                const url = editandoPlanId ? `/api/planes/${editandoPlanId}` : '/api/planes';
+                const method = editandoPlanId ? 'PUT' : 'POST';
+                const r = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ nombre, descripcion, monto, tipo: tipo || null })

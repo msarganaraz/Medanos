@@ -25,26 +25,31 @@ function crearSocio(numero_socio, apellido, nombre, plan_id, dni, email, telefon
 
 function obtenerSocios(filtro = {}) {
   try {
-    let query = 'SELECT * FROM socios WHERE 1=1';
+    let query = `
+      SELECT s.*, p.nombre as plan_nombre
+      FROM socios s
+      LEFT JOIN socio_planes sp ON s.id = sp.socio_id AND sp.fecha_hasta IS NULL
+      LEFT JOIN planes_cuota p ON sp.plan_id = p.id
+      WHERE 1=1
+    `;
     const params = [];
 
     if (filtro.estado) {
-      query += ' AND estado = ?';
+      query += ' AND s.estado = ?';
       params.push(filtro.estado);
     }
     if (filtro.plan_id) {
-      query += ' AND id IN (SELECT socio_id FROM socio_planes WHERE plan_id = ? AND fecha_hasta IS NULL)';
+      query += ' AND sp.plan_id = ?';
       params.push(filtro.plan_id);
     }
     if (filtro.busqueda) {
-      query += ' AND (numero_socio LIKE ? OR apellido LIKE ? OR nombre LIKE ?)';
+      query += ' AND (s.numero_socio LIKE ? OR s.apellido LIKE ? OR s.nombre LIKE ?)';
       const search = '%' + filtro.busqueda + '%';
       params.push(search, search, search);
     }
 
-    query += ' ORDER BY apellido, nombre';
-    const socios = db.prepare(query).all(...params);
-    return socios;
+    query += ' ORDER BY s.apellido, s.nombre';
+    return db.prepare(query).all(...params);
   } catch (err) {
     throw new Error(`Error fetching socios: ${err.message}`);
   }
@@ -64,7 +69,15 @@ function obtenerSocio(id) {
       ORDER BY a.nombre
     `).all(id);
 
-    return { socio, miembros, actividades };
+    const plan_actual = db.prepare(`
+      SELECT p.id, p.nombre, p.monto
+      FROM planes_cuota p
+      JOIN socio_planes sp ON p.id = sp.plan_id
+      WHERE sp.socio_id = ? AND sp.fecha_hasta IS NULL
+      LIMIT 1
+    `).get(id) || null;
+
+    return { socio, miembros, actividades, plan_actual };
   } catch (err) {
     throw new Error(`Error fetching socio: ${err.message}`);
   }

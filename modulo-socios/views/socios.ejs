@@ -1,4 +1,3 @@
-<!-- views/modulo-socios/socios.ejs -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,32 +8,48 @@
   <style>
     .socios-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .header-socios { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .btn-crear { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-crear { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
     .btn-crear:hover { background: #059669; }
     .busqueda-box { display: flex; gap: 10px; margin-bottom: 20px; }
     .busqueda-box input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .busqueda-box select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
     .tabla-socios { width: 100%; border-collapse: collapse; }
     .tabla-socios th { background: #f3f4f6; padding: 12px; text-align: left; font-weight: bold; }
     .tabla-socios td { padding: 12px; border-bottom: 1px solid #eee; }
     .tabla-socios tr:hover { background: #f9fafb; }
-    .estado-badge { padding: 4px 8px; border-radius: 3px; font-size: 12px; }
+    .estado-badge { padding: 4px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
     .estado-activo { background: #d1fae5; color: #065f46; }
     .estado-suspendido { background: #fef3c7; color: #92400e; }
     .estado-baja { background: #fee2e2; color: #991b1b; }
     .acciones { display: flex; gap: 8px; }
     .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 3px; cursor: pointer; }
     .btn-ver { background: #3b82f6; color: white; }
+    .btn-ver:hover { background: #2563eb; }
     .btn-editar { background: #8b5cf6; color: white; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-    .modal.activo { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; }
+    .btn-editar:hover { background: #7c3aed; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+    .modal.activo { display: flex; align-items: flex-start; justify-content: center; padding: 30px 0; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 560px; width: 90%; }
     .modal-titulo { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
     .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; color: #374151; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .form-actions { display: flex; gap: 10px; margin-top: 20px; }
     .btn-guardar { background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-guardar:hover { background: #059669; }
     .btn-cancelar { background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-cancelar:hover { background: #4b5563; }
+    /* Modal detalle */
+    .detalle-section { margin-bottom: 20px; }
+    .detalle-section h3 { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+    .detalle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .detalle-item label { font-size: 11px; color: #9ca3af; text-transform: uppercase; }
+    .detalle-item p { font-size: 14px; color: #111827; margin: 2px 0 0; }
+    .lista-miembros, .lista-actividades { list-style: none; padding: 0; margin: 0; }
+    .lista-miembros li, .lista-actividades li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; display: flex; justify-content: space-between; }
+    .lista-miembros li:last-child, .lista-actividades li:last-child { border-bottom: none; }
+    .empty-msg { font-size: 13px; color: #9ca3af; font-style: italic; }
   </style>
 </head>
 <body>
@@ -45,8 +60,8 @@
     </div>
 
     <div class="busqueda-box">
-      <input type="text" id="busqueda" placeholder="Buscar por número, apellido, nombre..." onkeyup="buscarSocios()">
-      <select id="filtroEstado" onchange="filtrarSocios()">
+      <input type="text" id="busqueda" placeholder="Buscar por número, apellido, nombre..." onkeyup="cargarSocios()">
+      <select id="filtroEstado" onchange="cargarSocios()">
         <option value="">Todos los estados</option>
         <option value="ACTIVO">Activo</option>
         <option value="SUSPENDIDO">Suspendido</option>
@@ -66,7 +81,7 @@
         </tr>
       </thead>
       <tbody id="tbody-socios">
-        <!-- Cargado por JS -->
+        <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:30px">Cargando...</td></tr>
       </tbody>
     </table>
   </div>
@@ -74,41 +89,56 @@
   <!-- Modal: Crear/Editar Socio -->
   <div id="modalSocio" class="modal">
     <div class="modal-content">
-      <div class="modal-titulo">Crear Socio</div>
+      <div class="modal-titulo" id="modalSocioTitulo">Crear Socio</div>
       <form id="formSocio">
-        <div class="form-group">
-          <label>Número de Socio</label>
-          <input type="text" id="numero_socio" required>
+        <input type="hidden" id="socioId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Número de Socio *</label>
+            <input type="text" id="numero_socio" required>
+          </div>
+          <div class="form-group">
+            <label>Plan</label>
+            <select id="plan_id">
+              <option value="">Sin plan</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Apellido</label>
-          <input type="text" id="apellido" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Apellido *</label>
+            <input type="text" id="apellido" required>
+          </div>
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Nombre</label>
-          <input type="text" id="nombre" required>
-        </div>
-        <div class="form-group">
-          <label>Plan</label>
-          <select id="plan_id" required>
-            <option value="">Seleccionar...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>DNI</label>
-          <input type="text" id="dni">
+        <div class="form-row">
+          <div class="form-group">
+            <label>DNI</label>
+            <input type="text" id="dni">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="telefono">
+          </div>
         </div>
         <div class="form-group">
           <label>Email</label>
           <input type="email" id="email">
         </div>
         <div class="form-group">
-          <label>Teléfono</label>
-          <input type="text" id="telefono">
-        </div>
-        <div class="form-group">
           <label>Domicilio</label>
           <input type="text" id="domicilio">
+        </div>
+        <div class="form-group" id="grupoEstado" style="display:none">
+          <label>Estado</label>
+          <select id="estadoSocio">
+            <option value="ACTIVO">Activo</option>
+            <option value="SUSPENDIDO">Suspendido</option>
+            <option value="DADO_DE_BAJA">Dado de baja</option>
+          </select>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn-guardar">Guardar</button>
@@ -118,9 +148,46 @@
     </div>
   </div>
 
+  <!-- Modal: Detalle Socio -->
+  <div id="modalDetalle" class="modal">
+    <div class="modal-content" style="max-width:620px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div class="modal-titulo" style="margin:0" id="detalleTitulo">Detalle del Socio</div>
+        <button class="btn-sm btn-editar" id="btnEditarDesdeDetalle">Editar</button>
+      </div>
+
+      <div class="detalle-section">
+        <h3>Datos del Grupo</h3>
+        <div class="detalle-grid">
+          <div class="detalle-item"><label>Nº Socio</label><p id="d_numero_socio">-</p></div>
+          <div class="detalle-item"><label>Estado</label><p id="d_estado">-</p></div>
+          <div class="detalle-item"><label>Plan actual</label><p id="d_plan">-</p></div>
+          <div class="detalle-item"><label>Fecha de alta</label><p id="d_fecha_alta">-</p></div>
+          <div class="detalle-item"><label>Email</label><p id="d_email">-</p></div>
+          <div class="detalle-item"><label>Teléfono</label><p id="d_telefono">-</p></div>
+          <div class="detalle-item" style="grid-column:span 2"><label>Domicilio</label><p id="d_domicilio">-</p></div>
+        </div>
+      </div>
+
+      <div class="detalle-section">
+        <h3>Miembros del Grupo</h3>
+        <ul class="lista-miembros" id="d_miembros"></ul>
+      </div>
+
+      <div class="detalle-section">
+        <h3>Actividades contratadas</h3>
+        <ul class="lista-actividades" id="d_actividades"></ul>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancelar" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let planes = [];
-    let socios = [];
+    let socioActualId = null;
 
     document.addEventListener('DOMContentLoaded', function() {
       cargarPlanes();
@@ -137,7 +204,7 @@
         planes.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = p.nombre;
+          opt.textContent = `${p.nombre} ($${p.monto})`;
           select.appendChild(opt);
         });
       }
@@ -152,28 +219,24 @@
 
       const res = await fetch('/api/socios?' + params.toString());
       const data = await res.json();
-      if (data.success) {
-        socios = data.socios;
-        renderizarTabla();
-      }
+      if (data.success) renderizarTabla(data.socios);
     }
 
-    function renderizarTabla() {
+    function renderizarTabla(socios) {
       const tbody = document.getElementById('tbody-socios');
+      if (!socios.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:30px">Sin resultados</td></tr>';
+        return;
+      }
       tbody.innerHTML = socios.map(s => {
-        const plan = planes.find(p => p.id === s.plan_id);
-        const badgeClass = {
-          'ACTIVO': 'estado-activo',
-          'SUSPENDIDO': 'estado-suspendido',
-          'DADO_DE_BAJA': 'estado-baja'
-        }[s.estado] || '';
+        const badgeClass = { 'ACTIVO': 'estado-activo', 'SUSPENDIDO': 'estado-suspendido', 'DADO_DE_BAJA': 'estado-baja' }[s.estado] || '';
         return `
           <tr>
             <td>${s.numero_socio || '-'}</td>
             <td>${s.apellido}</td>
             <td>${s.nombre}</td>
             <td><span class="estado-badge ${badgeClass}">${s.estado}</span></td>
-            <td>${plan ? plan.nombre : '-'}</td>
+            <td>${s.plan_nombre || '-'}</td>
             <td>
               <div class="acciones">
                 <button class="btn-sm btn-ver" onclick="verSocio(${s.id})">Ver</button>
@@ -185,17 +248,73 @@
       }).join('');
     }
 
-    function buscarSocios() {
-      cargarSocios();
-    }
-
-    function filtrarSocios() {
-      cargarSocios();
-    }
-
     function abrirModalCrearSocio() {
+      socioActualId = null;
       document.getElementById('formSocio').reset();
+      document.getElementById('socioId').value = '';
+      document.getElementById('modalSocioTitulo').textContent = 'Crear Socio';
+      document.getElementById('grupoEstado').style.display = 'none';
       document.getElementById('modalSocio').classList.add('activo');
+    }
+
+    async function editarSocio(id) {
+      const res = await fetch('/api/socios/' + id);
+      const data = await res.json();
+      if (!data.success) return alert('Error al cargar socio');
+      const s = data.socio;
+
+      socioActualId = id;
+      document.getElementById('socioId').value = id;
+      document.getElementById('modalSocioTitulo').textContent = 'Editar Socio';
+      document.getElementById('numero_socio').value = s.numero_socio || '';
+      document.getElementById('apellido').value = s.apellido || '';
+      document.getElementById('nombre').value = s.nombre || '';
+      document.getElementById('dni').value = s.dni || '';
+      document.getElementById('email').value = s.email || '';
+      document.getElementById('telefono').value = s.telefono || '';
+      document.getElementById('domicilio').value = s.domicilio || '';
+      document.getElementById('estadoSocio').value = s.estado || 'ACTIVO';
+      document.getElementById('grupoEstado').style.display = 'block';
+
+      // Buscar plan actual en socio_planes (viene en data.plan_actual)
+      document.getElementById('plan_id').value = data.plan_actual ? data.plan_actual.id : '';
+
+      cerrarModal('modalDetalle');
+      document.getElementById('modalSocio').classList.add('activo');
+    }
+
+    async function verSocio(id) {
+      const res = await fetch('/api/socios/' + id);
+      const data = await res.json();
+      if (!data.success) return alert('Error al cargar socio');
+      const s = data.socio;
+
+      document.getElementById('detalleTitulo').textContent = s.apellido + ', ' + s.nombre;
+      document.getElementById('d_numero_socio').textContent = s.numero_socio || '-';
+      const badgeClass = { 'ACTIVO': 'estado-activo', 'SUSPENDIDO': 'estado-suspendido', 'DADO_DE_BAJA': 'estado-baja' }[s.estado] || '';
+      document.getElementById('d_estado').innerHTML = `<span class="estado-badge ${badgeClass}">${s.estado}</span>`;
+      document.getElementById('d_plan').textContent = data.plan_actual ? data.plan_actual.nombre + ' ($' + data.plan_actual.monto + ')' : 'Sin plan';
+      document.getElementById('d_fecha_alta').textContent = s.fecha_alta || '-';
+      document.getElementById('d_email').textContent = s.email || '-';
+      document.getElementById('d_telefono').textContent = s.telefono || '-';
+      document.getElementById('d_domicilio').textContent = s.domicilio || '-';
+
+      const miembrosList = document.getElementById('d_miembros');
+      if (data.miembros && data.miembros.length) {
+        miembrosList.innerHTML = data.miembros.map(m => `<li><span>${m.apellido}, ${m.nombre}</span><span style="color:#6b7280;font-size:12px">${m.relacion}</span></li>`).join('');
+      } else {
+        miembrosList.innerHTML = '<li><span class="empty-msg">Sin miembros registrados</span></li>';
+      }
+
+      const actividadesList = document.getElementById('d_actividades');
+      if (data.actividades && data.actividades.length) {
+        actividadesList.innerHTML = data.actividades.map(a => `<li><span>${a.actividad_nombre}</span><span style="color:#6b7280;font-size:12px">x${a.cantidad} — $${(a.precio * a.cantidad).toFixed(2)}/mes</span></li>`).join('');
+      } else {
+        actividadesList.innerHTML = '<li><span class="empty-msg">Sin actividades contratadas</span></li>';
+      }
+
+      document.getElementById('btnEditarDesdeDetalle').onclick = () => editarSocio(id);
+      document.getElementById('modalDetalle').classList.add('activo');
     }
 
     function cerrarModal(id) {
@@ -204,19 +323,22 @@
 
     async function guardarSocio(e) {
       e.preventDefault();
+      const id = document.getElementById('socioId').value;
       const datos = {
         numero_socio: document.getElementById('numero_socio').value,
         apellido: document.getElementById('apellido').value,
         nombre: document.getElementById('nombre').value,
-        plan_id: parseInt(document.getElementById('plan_id').value),
+        plan_id: document.getElementById('plan_id').value || null,
         dni: document.getElementById('dni').value || null,
         email: document.getElementById('email').value || null,
         telefono: document.getElementById('telefono').value || null,
         domicilio: document.getElementById('domicilio').value || null
       };
 
-      const res = await fetch('/api/socios', {
-        method: 'POST',
+      if (id) datos.estado = document.getElementById('estadoSocio').value;
+
+      const res = await fetch(id ? '/api/socios/' + id : '/api/socios', {
+        method: id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datos)
       });
@@ -224,18 +346,9 @@
       if (data.success) {
         cerrarModal('modalSocio');
         cargarSocios();
-        alert('Socio creado exitosamente');
       } else {
         alert('Error: ' + data.error);
       }
-    }
-
-    function verSocio(id) {
-      alert('Detalle de socio ' + id + ' (implementar vista detalle)');
-    }
-
-    function editarSocio(id) {
-      alert('Editar socio ' + id + ' (implementar modal de edición)');
     }
   </script>
 </body>
