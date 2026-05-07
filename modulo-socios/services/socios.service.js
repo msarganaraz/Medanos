@@ -3,10 +3,21 @@ const db = require('../../database/db');
 function crearSocio(numero_socio, apellido, nombre, plan_id, dni, email, telefono, domicilio) {
   try {
     const result = db.prepare(`
-      INSERT INTO socios (numero_socio, apellido, nombre, plan_id, dni, email, telefono, domicilio, fecha_alta, estado)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO')
-    `).run(numero_socio, apellido, nombre, plan_id, dni || null, email || null, telefono || null, domicilio || null, new Date().toISOString().split('T')[0]);
-    return { success: true, id: result.lastInsertRowid };
+      INSERT INTO socios (numero_socio, apellido, nombre, dni, email, telefono, domicilio, fecha_alta, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVO')
+    `).run(numero_socio, apellido, nombre, dni || null, email || null, telefono || null, domicilio || null, new Date().toISOString().split('T')[0]);
+
+    const socioId = result.lastInsertRowid;
+
+    // Asignar plan via socio_planes si se pasó plan_id
+    if (plan_id) {
+      db.prepare(`
+        INSERT INTO socio_planes (socio_id, plan_id, fecha_desde)
+        VALUES (?, ?, ?)
+      `).run(socioId, plan_id, new Date().toISOString().split('T')[0]);
+    }
+
+    return { success: true, id: socioId };
   } catch (err) {
     throw new Error(`Error creating socio: ${err.message}`);
   }
@@ -22,7 +33,7 @@ function obtenerSocios(filtro = {}) {
       params.push(filtro.estado);
     }
     if (filtro.plan_id) {
-      query += ' AND plan_id = ?';
+      query += ' AND id IN (SELECT socio_id FROM socio_planes WHERE plan_id = ? AND fecha_hasta IS NULL)';
       params.push(filtro.plan_id);
     }
     if (filtro.busqueda) {
@@ -66,7 +77,7 @@ function actualizarSocio(id, updates) {
 
     if (updates.apellido !== undefined) { fields.push('apellido = ?'); values.push(updates.apellido); }
     if (updates.nombre !== undefined) { fields.push('nombre = ?'); values.push(updates.nombre); }
-    if (updates.plan_id !== undefined) { fields.push('plan_id = ?'); values.push(updates.plan_id); }
+    // plan_id se gestiona via socio_planes, no como columna directa
     if (updates.estado !== undefined) { fields.push('estado = ?'); values.push(updates.estado); }
     if (updates.email !== undefined) { fields.push('email = ?'); values.push(updates.email); }
     if (updates.telefono !== undefined) { fields.push('telefono = ?'); values.push(updates.telefono); }

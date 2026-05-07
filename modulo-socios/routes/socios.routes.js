@@ -28,7 +28,7 @@ router.delete('/api/socios/:id/actividades/:actividad_grupo_id', requireRole(['a
 // View
 router.get('/socios', (req, res) => {
   if (!req.session.usuario) return res.redirect('/login');
-  res.render('modulo-socios/socios');
+  res.render('socios');
 });
 
 module.exports = router;
