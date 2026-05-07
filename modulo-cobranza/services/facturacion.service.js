@@ -2,7 +2,7 @@ const db = require('../../database/db');
 
 function calcularMontoParaSocio(socio_id) {
   try {
-    const socio = db.prepare('SELECT plan_id FROM socios WHERE id = ? AND estado = "ACTIVO"').get(socio_id);
+    const socio = db.prepare('SELECT id FROM socios WHERE id = ? AND estado = "ACTIVO"').get(socio_id);
     if (!socio) return null;
 
     // Obtener monto del plan base usando socio_planes con fecha vigente
